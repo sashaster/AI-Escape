@@ -2,7 +2,7 @@
 
 #include <Engine/Window.hpp>
 #include <Engine/Core.hpp>
-
+#include <Engine/Renderer/Renderer.hpp>
 #include <Engine/Events/ApplicationEvent.hpp>
 
 
@@ -43,8 +43,10 @@ namespace Engine {
         glfwSetFramebufferSizeCallback(m_Handle.get(), [](GLFWwindow* window, int width, int height) {
             const auto data = static_cast<Data*>(glfwGetWindowUserPointer(window));
             ASSERT(data, "Window data is null");
+
             data->width = width;
             data->height = height;
+            Renderer::SetViewport(width, height);
             WindowResizeEvent event(width, height);
             data->eventCallback(event);
         });

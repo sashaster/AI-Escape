@@ -6,6 +6,8 @@
 
 namespace Engine {
     using RendererID = GLuint;
+    inline constexpr int WindowWidth = 1280;
+    inline constexpr int WindowHeight = 720;
 }
 
 #ifndef NDEBUG

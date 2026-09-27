@@ -7,7 +7,7 @@ namespace Engine {
 
     class OrthographicCameraController {
     public:
-        explicit OrthographicCameraController(float aspect, float speed = 1.0);
+        explicit OrthographicCameraController(float aspect, float zoomLevel = 1.0f, float speed = 1.0);
 
         void OnUpdate(float dt);
         void OnEvent(Event& event);
@@ -20,6 +20,7 @@ namespace Engine {
         float m_Speed;
         glm::vec3 m_Position;
         float m_Aspect;
+        float m_ZoomLevel;
 
     };
 

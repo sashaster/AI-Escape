@@ -5,8 +5,12 @@
 
 int main() {
     using namespace Engine;
-    Log::Init();
-    const auto app = CreateApplication();
-    app->Run();
+    try {
+        Log::Init();
+        const auto app = CreateApplication();
+        app->Run();
+    }catch (...) {
+        return -1;
+    }
     return 0;
 }

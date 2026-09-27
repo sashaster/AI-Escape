@@ -5,14 +5,16 @@
 
 
 namespace Engine {
-    VertexBuffer::VertexBuffer(const void* vertices, const std::uint32_t size) {
+    VertexBuffer::VertexBuffer(const std::span<Vertex> vertices) {
+        ASSERT(!vertices.empty(), "Vertex buffer cannot be empty")
         glGenBuffers(1, &m_ID);
         glBindBuffer(GL_ARRAY_BUFFER, m_ID);
-        glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size_bytes(), vertices.data(), GL_STATIC_DRAW);
+        m_Layout = vertices.front().GetLayout();
     }
 
-    std::shared_ptr<VertexBuffer> VertexBuffer::Create(const void* vertices, const std::uint32_t size) {
-        return std::shared_ptr<VertexBuffer>(new VertexBuffer(vertices, size));
+    std::shared_ptr<VertexBuffer> VertexBuffer::Create(const std::span<Vertex> vertices) {
+        return std::shared_ptr<VertexBuffer>(new VertexBuffer(vertices));
     }
 
     VertexBuffer::~VertexBuffer() {
@@ -27,14 +29,14 @@ namespace Engine {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    IndexBuffer::IndexBuffer(const std::uint32_t* indices, const std::uint32_t count): m_Count(count) {
+    IndexBuffer::IndexBuffer(const std::span<std::uint32_t> indices): m_Count(indices.size()) {
         glGenBuffers(1, &m_ID);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ID);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(std::uint32_t), indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size_bytes(), indices.data(), GL_STATIC_DRAW);
     }
 
-    std::shared_ptr<IndexBuffer> IndexBuffer::Create(const std::uint32_t* indices, const std::uint32_t count) {
-        return std::shared_ptr<IndexBuffer>(new IndexBuffer(indices, count));
+    std::shared_ptr<IndexBuffer> IndexBuffer::Create(const std::span<std::uint32_t> indices) {
+        return std::shared_ptr<IndexBuffer>(new IndexBuffer(indices));
     }
 
     void IndexBuffer::Bind() const {

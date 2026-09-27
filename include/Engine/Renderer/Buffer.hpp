@@ -3,12 +3,16 @@
 #include <memory>
 #include <vector>
 #include <glad/gl.h>
+#include <glm/glm.hpp>
+#include <span>
 
 
 #include <Engine/Core.hpp>
 
 
 namespace Engine {
+
+    class VertexLayout;
 
     struct VertexAttribute final {
 
@@ -20,7 +24,7 @@ namespace Engine {
             Float4
         };
 
-        VertexAttribute(const AttributeType type, const std::string_view name, const bool normalized = false): type(type), normalized(normalized){}
+        VertexAttribute(const AttributeType type, const std::string_view name, const bool normalized = false): type(type), normalized(normalized), name(name){}
         [[nodiscard]] static GLenum GLType(AttributeType type);
         [[nodiscard]] std::uint32_t GetSize() const;
         [[nodiscard]] std::uint32_t GetCount() const;
@@ -28,7 +32,9 @@ namespace Engine {
         std::uint32_t offset = 0;
         AttributeType type;
         bool normalized;
+        std::string name;
     };
+
 
     class VertexLayout final {
     public:
@@ -54,28 +60,37 @@ namespace Engine {
         std::vector<VertexAttribute> m_Attributes;
     };
 
-    class VertexBuffer {
+    struct Vertex {
+        glm::vec3 position;
+        glm::vec4 color;
+
+        [[nodiscard]] VertexLayout GetLayout() const {
+            return {
+                {VertexAttribute::AttributeType::Float3, "position"},
+                {VertexAttribute::AttributeType::Float4, "color"}
+            };
+        }
+    };
+
+    class VertexBuffer final {
     public:
         ~VertexBuffer();
         void Bind() const;
         void Unbind() const;
-        void SetLayout(const VertexLayout& layout) {
-            m_Layout = layout;
-        }
         [[nodiscard]] const VertexLayout& GetLayout() const {
             return m_Layout;
         }
-        static std::shared_ptr<VertexBuffer> Create(const void* vertices, std::uint32_t size);
+        static std::shared_ptr<VertexBuffer> Create(std::span<Vertex> vertices);
 
     private:
-        explicit VertexBuffer(const void* vertices, std::uint32_t size);
+        explicit VertexBuffer(std::span<Vertex> vertices);
         VertexLayout m_Layout;
         RendererID m_ID;
     };
 
-    class IndexBuffer {
+    class IndexBuffer final {
     public:
-        static std::shared_ptr<IndexBuffer> Create(const std::uint32_t* indices, std::uint32_t count);
+        static std::shared_ptr<IndexBuffer> Create(std::span<std::uint32_t> indices);
         [[nodiscard]] std::uint32_t GetCount() const {
             return m_Count;
         }
@@ -84,9 +99,11 @@ namespace Engine {
         ~IndexBuffer();
 
     private:
-        explicit IndexBuffer(const std::uint32_t* indices, std::uint32_t count);
+        explicit IndexBuffer(std::span<std::uint32_t> indices);
         RendererID m_ID;
         std::uint32_t m_Count;
     };
+
+
 
 }

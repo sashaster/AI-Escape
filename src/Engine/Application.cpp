@@ -12,7 +12,7 @@ namespace Engine {
 
     Application::Application(){
         INFO("Engine started");
-        m_Window = std::make_unique<Window>("AI-Escape", 1280, 720);
+        m_Window = std::make_unique<Window>("AI-Escape", WindowWidth, WindowHeight);
         m_Window->SetEventCallback([this](Event& e) { OnEvent(e); });
     }
 

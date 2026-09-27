@@ -4,7 +4,7 @@
 
 namespace Engine {
 
-    OrthographicCameraController::OrthographicCameraController(const float aspect, const float speed): m_Camera(-aspect, aspect, -1.0f, 1.0f), m_Speed(speed), m_Aspect(aspect) {
+    OrthographicCameraController::OrthographicCameraController(const float aspect, const float zoomLevel ,const float speed): m_Camera(-aspect * zoomLevel, aspect * zoomLevel, -zoomLevel, zoomLevel), m_Speed(speed), m_Aspect(aspect), m_ZoomLevel(zoomLevel) {
         m_Position = m_Camera.GetPosition();
     }
 
@@ -14,7 +14,7 @@ namespace Engine {
 
     bool OrthographicCameraController::OnWindowResize(WindowResizeEvent& event) {
         m_Aspect = static_cast<float>(event.GetWidth()) / static_cast<float>(event.GetHeight());
-        m_Camera.SetProjection(-m_Aspect, m_Aspect, -1.0f, 1.0f);
+        m_Camera.SetProjection(-m_Aspect * m_ZoomLevel, m_Aspect * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
         return false;
     }
 
