@@ -10,10 +10,10 @@ namespace Engine {
         [[nodiscard]] const glm::mat4& GetViewProjection() const {
             return m_ViewProjection;
         }
-        [[nodiscard]] const glm::vec3& GetPosition() const {
+        [[nodiscard]] const glm::vec2& GetPosition() const {
             return m_Position;
         }
-        void SetPosition(const glm::vec3& position);
+        void SetPosition(const glm::vec2& position);
         void SetProjection(float left, float right, float bottom, float top);
 
     private:
@@ -21,7 +21,7 @@ namespace Engine {
         glm::mat4 m_Projection;
         glm::mat4 m_View;
         glm::mat4 m_ViewProjection;
-        glm::vec3 m_Position;
+        glm::vec2 m_Position;
     };
 
 }

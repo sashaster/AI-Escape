@@ -4,7 +4,7 @@
 #include <Engine/Window.hpp>
 #include <Engine/Events/Event.hpp>
 #include <Engine/Events/ApplicationEvent.hpp>
-#include <Engine/Scene.hpp>
+#include <Engine/LayerStack.hpp>
 
 
 namespace Engine {
@@ -15,9 +15,15 @@ namespace Engine {
         virtual ~Application() = default;
         void Run();
         void OnEvent(Event& event);
+        [[nodiscard]]static const Application& Get(){
+            return *s_Instance;
+        }
+        [[nodiscard]] const Window& GetWindow() const {
+            return *m_Window;
+        }
     protected:
-        void SetScene(std::unique_ptr<Scene> scene) {
-            m_Scene = std::move(scene);
+        void PushLayer(std::unique_ptr<Layer> layer) {
+            m_LayerStack.PushLayer(std::move(layer));
         }
     private:
         bool OnWindowClose(WindowCloseEvent& event);
@@ -26,8 +32,9 @@ namespace Engine {
             GLFW();
             ~GLFW();
         } m_GLFW;
+        inline static Application* s_Instance = nullptr;
         std::unique_ptr<Window> m_Window;
-        std::unique_ptr<Scene> m_Scene;
+        LayerStack m_LayerStack;
         bool m_Running = true;
         bool m_Minimized = false;
     };

@@ -15,6 +15,7 @@ namespace Engine {
         glBindVertexArray(m_ID);
         indexBuffer->Bind();
         m_IndexBuffer = indexBuffer;
+        glBindVertexArray(0);
     }
 
     VertexArray::~VertexArray() {
@@ -35,6 +36,7 @@ namespace Engine {
             ++m_AttributeIndex;
             m_VertexBuffers.push_back(vertexBuffer);
         }
+        glBindVertexArray(0);
     }
 
     void VertexArray::Bind() const {

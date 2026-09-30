@@ -34,14 +34,14 @@ namespace Engine {
         glfwSwapInterval(1);
 
         glfwSetWindowCloseCallback(m_Handle.get(), [](GLFWwindow* window) {
-            const auto data = static_cast<Data*>(glfwGetWindowUserPointer(window));
+            const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
             ASSERT(data, "Window data is null");
             WindowCloseEvent event;
             data->eventCallback(event);
         });
 
         glfwSetFramebufferSizeCallback(m_Handle.get(), [](GLFWwindow* window, int width, int height) {
-            const auto data = static_cast<Data*>(glfwGetWindowUserPointer(window));
+            const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
             ASSERT(data, "Window data is null");
 
             data->width = width;

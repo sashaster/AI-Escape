@@ -80,17 +80,17 @@ namespace Engine {
         [[nodiscard]] const VertexLayout& GetLayout() const {
             return m_Layout;
         }
-        static std::shared_ptr<VertexBuffer> Create(std::span<Vertex> vertices);
+        static std::shared_ptr<VertexBuffer> Create(std::span<const Vertex> vertices);
 
     private:
-        explicit VertexBuffer(std::span<Vertex> vertices);
+        explicit VertexBuffer(std::span<const Vertex> vertices);
         VertexLayout m_Layout;
         RendererID m_ID;
     };
 
     class IndexBuffer final {
     public:
-        static std::shared_ptr<IndexBuffer> Create(std::span<std::uint32_t> indices);
+        static std::shared_ptr<IndexBuffer> Create(std::span<const std::uint32_t> indices);
         [[nodiscard]] std::uint32_t GetCount() const {
             return m_Count;
         }
@@ -99,7 +99,7 @@ namespace Engine {
         ~IndexBuffer();
 
     private:
-        explicit IndexBuffer(std::span<std::uint32_t> indices);
+        explicit IndexBuffer(std::span<const std::uint32_t> indices);
         RendererID m_ID;
         std::uint32_t m_Count;
     };

@@ -11,7 +11,8 @@
 namespace Engine {
 
     Application::Application(){
-        INFO("Engine started");
+        INFO("Starting engine...");
+        s_Instance = this;
         m_Window = std::make_unique<Window>("AI-Escape", WindowWidth, WindowHeight);
         m_Window->SetEventCallback([this](Event& e) { OnEvent(e); });
     }
@@ -28,12 +29,17 @@ namespace Engine {
     }
 
     void Application::Run() {
+        INFO("Engine is running");
         float lastFrame = 0.0f;
         while (m_Running){
             const auto time = static_cast<float>(glfwGetTime());
             const auto dt = time - lastFrame;
             lastFrame = time;
-            m_Scene->OnUpdate(dt);
+            if (!m_Minimized) {
+                for (const auto& layer: m_LayerStack) {
+                    layer->OnUpdate(dt);
+                }
+            }
             m_Window->OnUpdate();
         }
     }
@@ -46,7 +52,12 @@ namespace Engine {
         dispatcher.Dispatch<WindowResizeEvent>([this](WindowResizeEvent& e) {
             return OnWindowResize(e);
         });
-        m_Scene->OnEvent(event);
+        for (auto it = m_LayerStack.rbegin(); it != m_LayerStack.rend(); ++it) {
+            (*it)->OnEvent(event);
+            if (event.IsHandled()) {
+                break;
+            }
+        }
     }
 
     bool Application::OnWindowClose(WindowCloseEvent& event) {

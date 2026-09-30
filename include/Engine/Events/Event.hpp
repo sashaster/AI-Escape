@@ -7,7 +7,8 @@ namespace Engine {
     enum class EventType{
         None,
         WindowClose,
-        WindowResize
+        WindowResize,
+        KeyPressed
     };
 
 #define EVENT_TYPE(type) \

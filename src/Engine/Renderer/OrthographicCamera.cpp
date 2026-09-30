@@ -8,12 +8,12 @@ namespace Engine {
     }
 
     void OrthographicCamera::CalculateViewProjection() {
-        const glm::mat4 transform = glm::translate(glm::mat4(1.0f), m_Position);
+        const glm::mat4 transform = glm::translate(glm::mat4(1.0f), glm::vec3(m_Position, 0.0f));
         m_View = glm::inverse(transform);
         m_ViewProjection = m_Projection * m_View;
     }
 
-    void OrthographicCamera::SetPosition(const glm::vec3& position) {
+    void OrthographicCamera::SetPosition(const glm::vec2& position) {
         m_Position = position;
         CalculateViewProjection();
     }

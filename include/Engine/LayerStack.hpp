@@ -1,0 +1,35 @@
+#pragma once
+#include <vector>
+
+
+#include <Engine/Layer.hpp>
+
+
+namespace Engine {
+
+    class LayerStack {
+    public:
+        void PushLayer(std::unique_ptr<Layer> layer);
+
+        auto end() {
+            return m_Layers.end();
+        }
+
+        auto begin() {
+            return m_Layers.begin();
+        }
+
+        auto rbegin() {
+            return m_Layers.rbegin();
+        }
+
+        auto rend() {
+            return m_Layers.rend();
+        }
+
+    private:
+        std::vector<std::unique_ptr<Layer>> m_Layers;
+
+
+    };
+}

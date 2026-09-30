@@ -25,11 +25,14 @@ namespace Engine {
             m_Data.eventCallback = callback;
         }
         void OnUpdate();
+        [[nodiscard]] GLFWwindow* GetHandle() const {
+            return m_Handle.get();
+        }
 
     private:
         void Init();
 
-        struct Data {
+        struct WindowData {
             std::string title;
             int width;
             int height;

@@ -18,7 +18,7 @@ namespace Engine {
         bool OnWindowResize(WindowResizeEvent& event);
         OrthographicCamera m_Camera;
         float m_Speed;
-        glm::vec3 m_Position;
+        glm::vec2 m_Position;
         float m_Aspect;
         float m_ZoomLevel;
 
