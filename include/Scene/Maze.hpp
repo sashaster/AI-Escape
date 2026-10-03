@@ -8,7 +8,6 @@
 
 
 namespace Scene {
-    namespace Phys = Engine::Physics;
 
     struct MazeCell {
         bool visited = false;
@@ -56,8 +55,8 @@ namespace Scene {
             float width;
             float height;
             float cellSize;
-            std::vector<Phys::AABB> walls;
-            Phys::AABB exit;
+            std::vector<Engine::Physics::AABB> walls;
+            Engine::Physics::AABB exit;
 
         } m_Data;
 
