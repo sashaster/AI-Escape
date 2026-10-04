@@ -87,10 +87,10 @@ namespace Scene {
 
     void Maze::BuildMaze(const float wallThickness) {
         constexpr auto wallColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-        constexpr auto exitColor = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
         constexpr auto floorColor = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
         for (auto y = 0; y < m_Grid.GetHeight(); ++y) {
             for (auto x = 0; x < m_Grid.GetWidth(); ++x) {
+                const bool isExit = (y == m_Grid.GetHeight() - 1 && x == m_Grid.GetWidth() - 1);
                 const auto &cell = m_Grid[x, y];
                 const auto [cellX, cellY] = ToWorldSpace(x, y);
                 AddWall(cellX + m_Data.cellSize * 0.5f, cellY + m_Data.cellSize * 0.5f, m_Data.cellSize * 0.5f, m_Data.cellSize * 0.5f, floorColor, false);
@@ -98,11 +98,12 @@ namespace Scene {
                     const auto cx = cellX + m_Data.cellSize * 0.5f;
                     const auto cy = cellY + m_Data.cellSize;
                     const auto hw = m_Data.cellSize * 0.5f;
+                    const auto exitY = cy + hw;
                     const auto hh = wallThickness * 0.5f;
-                    if (y == m_Grid.GetHeight() - 1 && x == m_Grid.GetWidth() - 1) {
-                        AddWall(cx, cy, hw, hh, exitColor, false);
-                        m_Data.exit = {.min = {cx - hw, cy - hh}, .max = {cx + hw, cy + hh}};
-                    } else {
+                    if (isExit) {
+                        m_Data.exit = {.min = {cx - hw, exitY - hh}, .max = {cx + hw, exitY + hh}};
+                    }
+                    else {
                         AddWall(cx, cy, hw, hh, wallColor);
                     }
                 }
