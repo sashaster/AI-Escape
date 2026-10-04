@@ -4,9 +4,9 @@
 #include <poll.h>
 #include <cstring>
 
-#include <Engine/Net.hpp>
-#include <Engine/Log.hpp>
-#include <Engine/Core.hpp>
+#include <Engine/Core/Net.hpp>
+#include <Engine/Core/Log.hpp>
+#include <Engine/Core/Core.hpp>
 
 
 namespace Engine {

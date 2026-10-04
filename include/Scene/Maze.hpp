@@ -2,9 +2,9 @@
 #include <random>
 #include <utility>
 
-#include <Engine/Core.hpp>
+#include <Engine/Core/Core.hpp>
 #include <Engine/Renderer/Buffer.hpp>
-#include <Engine/Physics.hpp>
+#include <Engine/Core/Physics.hpp>
 
 
 namespace Scene {
@@ -41,7 +41,7 @@ namespace Scene {
 
     private:
         void RemoveWallBetween(int x, int y, int nx, int ny);
-
+        void Reset();
         int m_Width, m_Height;
         std::vector<MazeCell> m_Cells;
     };
@@ -55,6 +55,7 @@ namespace Scene {
             float width;
             float height;
             float cellSize;
+            float wallThickness;
             std::vector<Engine::Physics::AABB> walls;
             Engine::Physics::AABB exit;
 
@@ -70,10 +71,12 @@ namespace Scene {
         }
 
         Maze(const MazeGrid& grid, float cellSize, float wallThickness);
-        void BuildMaze(float wallThickness);
+        void BuildMaze();
         [[nodiscard]] const MazeData& GetData() const {
             return m_Data;
         }
+
+        void Regenerate(std::uint32_t seed);
 
     private:
         void AddWall(float cx, float cy, float halfW, float halfH, const glm::vec4 &color, bool solid=true);

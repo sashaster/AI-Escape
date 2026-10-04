@@ -7,6 +7,7 @@
 namespace Scene {
 
     void MazeGrid::Generate(const std::uint32_t seed) {
+        Reset();
         std::mt19937 generator(seed);
         constexpr int startX = 0, startY = 0;
         std::stack<std::pair<int, int> > stack;
@@ -44,6 +45,16 @@ namespace Scene {
         }
     }
 
+    void MazeGrid::Reset() {
+        for (auto x = 0; x < m_Width; ++x) {
+            for (auto y = 0; y < m_Height; ++y) {
+                auto& cell = (*this)[x, y];
+                cell.wallN = cell.wallS = cell.wallE = cell.wallW = true;
+                cell.visited = false;
+            }
+        }
+    }
+
     void MazeGrid::RemoveWallBetween(const int x, const int y, const int nx, const int ny) {
         if (nx == x + 1) {
             //E
@@ -58,7 +69,7 @@ namespace Scene {
             (*this)[x, y].wallN = false;
             (*this)[nx, ny].wallS = false;
         } else if (ny == y - 1) {
-            //N
+            //S
             (*this)[x, y].wallS = false;
             (*this)[nx, ny].wallN = false;
         }
@@ -81,41 +92,50 @@ namespace Scene {
         m_Data.width = m_Grid.GetWidth() * cellSize;
         m_Data.height = m_Grid.GetHeight() * cellSize;
         m_Data.cellSize = cellSize;
-        m_Grid.Generate(0);
-        BuildMaze(wallThickness);
+        m_Data.wallThickness = wallThickness;
+        Regenerate(std::random_device{}());
     }
 
-    void Maze::BuildMaze(const float wallThickness) {
+    void Maze::Regenerate(const std::uint32_t seed) {
+        m_Grid.Generate(seed);
+        m_Grid[m_Grid.GetWidth() - 1, m_Grid.GetHeight() - 1].wallN = false;
+        m_Data.indices.clear();
+        m_Data.vertices.clear();
+        m_Data.walls.clear();
+        BuildMaze();
+    }
+
+    void Maze::BuildMaze() {
         constexpr auto wallColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
         constexpr auto floorColor = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
+        constexpr auto exitColor = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+        const float cs = m_Data.cellSize;
+        const float wt = m_Data.wallThickness;
         for (auto y = 0; y < m_Grid.GetHeight(); ++y) {
             for (auto x = 0; x < m_Grid.GetWidth(); ++x) {
                 const bool isExit = (y == m_Grid.GetHeight() - 1 && x == m_Grid.GetWidth() - 1);
                 const auto &cell = m_Grid[x, y];
                 const auto [cellX, cellY] = ToWorldSpace(x, y);
-                AddWall(cellX + m_Data.cellSize * 0.5f, cellY + m_Data.cellSize * 0.5f, m_Data.cellSize * 0.5f, m_Data.cellSize * 0.5f, floorColor, false);
+                AddWall(cellX + cs * 0.5f, cellY + cs * 0.5f, cs * 0.5f, cs * 0.5f, floorColor, false);
                 if (cell.wallN) {
-                    const auto cx = cellX + m_Data.cellSize * 0.5f;
-                    const auto cy = cellY + m_Data.cellSize;
-                    const auto hw = m_Data.cellSize * 0.5f;
-                    const auto exitY = cy + hw;
-                    const auto hh = wallThickness * 0.5f;
-                    if (isExit) {
-                        m_Data.exit = {.min = {cx - hw, exitY - hh}, .max = {cx + hw, exitY + hh}};
-                    }
-                    else {
-                        AddWall(cx, cy, hw, hh, wallColor);
-                    }
+                    AddWall(cellX + cs * 0.5f,  cellY + cs,  cs * 0.5f, wt * 0.5f, wallColor);
+                }
+
+                if (isExit) {
+                    const float topY = cellY + cs;
+                    const float ecy = topY + cs * 0.5f;
+                    AddWall(cellX + cs * 0.5f, ecy,cs * 0.5f, cs * 0.5f, exitColor, false);
+                    m_Data.exit = {.min = {cellX, topY}, .max = {cellX + cs, topY + cs}};
                 }
                 if (cell.wallE) {
-                    AddWall(cellX + m_Data.cellSize, cellY + m_Data.cellSize * 0.5f, wallThickness * 0.5f, m_Data.cellSize* 0.5f,
+                    AddWall(cellX + cs, cellY + cs * 0.5f, wt * 0.5f, cs* 0.5f,
                             wallColor);
                 }
                 if (y == 0 && cell.wallS) {
-                    AddWall(cellX + m_Data.cellSize * 0.5f, cellY, m_Data.cellSize * 0.5f, wallThickness * 0.5f, wallColor);
+                    AddWall(cellX + cs * 0.5f, cellY, cs * 0.5f, wt * 0.5f, wallColor);
                 }
                 if (x == 0 && cell.wallW) {
-                    AddWall(cellX, cellY + m_Data.cellSize * 0.5f, wallThickness * 0.5f, m_Data.cellSize * 0.5f, wallColor);
+                    AddWall(cellX, cellY + cs * 0.5f, wt * 0.5f, cs * 0.5f, wallColor);
                 }
             }
         }

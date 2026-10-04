@@ -3,7 +3,7 @@
 #include <glad/gl.h>
 #include <cstdint>
 
-#include <Engine/Log.hpp>
+#include <Engine/Core/Log.hpp>
 
 namespace Engine {
     using RendererID = GLuint;

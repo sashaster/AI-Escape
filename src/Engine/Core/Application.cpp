@@ -1,9 +1,9 @@
 #include <GLFW/glfw3.h>
 #include <array>
 
-#include <Engine/Application.hpp>
-#include <Engine/Window.hpp>
-#include <Engine/Core.hpp>
+#include <Engine/Core/Application.hpp>
+#include <Engine/Core/Window.hpp>
+#include <Engine/Core/Core.hpp>
 #include <Engine/Renderer/Buffer.hpp>
 #include <Engine/Renderer/Renderer.hpp>
 

@@ -1,10 +1,10 @@
 #pragma once
 #include <memory>
 
-#include <Engine/Window.hpp>
+#include <Engine/Core/Window.hpp>
 #include <Engine/Events/Event.hpp>
 #include <Engine/Events/ApplicationEvent.hpp>
-#include <Engine/LayerStack.hpp>
+#include <Engine/Core/LayerStack.hpp>
 
 
 namespace Engine {

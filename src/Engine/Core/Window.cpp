@@ -1,7 +1,7 @@
 #include <glad/gl.h>
 
-#include <Engine/Window.hpp>
-#include <Engine/Core.hpp>
+#include <Engine/Core/Window.hpp>
+#include <Engine/Core/Core.hpp>
 #include <Engine/Renderer/Renderer.hpp>
 #include <Engine/Events/ApplicationEvent.hpp>
 

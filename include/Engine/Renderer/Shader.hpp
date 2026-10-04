@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 
 
-#include <Engine/Core.hpp>
+#include <Engine/Core/Core.hpp>
 
 
 namespace Engine {

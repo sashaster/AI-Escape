@@ -1,11 +1,11 @@
 #include <Scene/Agent.hpp>
-#include <Engine/Input.hpp>
+#include <Engine/Core/Input.hpp>
 
 
 namespace Scene {
 
     static constexpr float kAgentSpeed = 20.0f;
-    void Agent::OnUpdate(const float dt, const std::vector<Engine::Physics::AABB>& walls, const Engine::Physics::AABB& exit) {
+    void Agent::OnUpdate(const float dt, const std::vector<Engine::Physics::AABB>& walls) {
 
         glm::vec2 dir{0.0f, 0.0f};
 
@@ -37,10 +37,6 @@ namespace Scene {
 
         if (Engine::Physics::Overlaps(GetBox(), walls)) {
             m_Position.y -= delta.y;
-        }
-
-        if (Engine::Physics::Overlaps(GetBox(), exit)) {
-            m_Escape = true;
         }
     }
 }

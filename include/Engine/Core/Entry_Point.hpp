@@ -1,7 +1,7 @@
 #pragma once
-#include <Engine/Application.hpp>
-#include <Engine/Log.hpp>
-#include <Engine/Net.hpp>
+#include <Engine/Core/Application.hpp>
+#include <Engine/Core/Log.hpp>
+#include <Engine/Core/Net.hpp>
 
 
 int main() {

@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <Engine/Physics.hpp>
+#include <Engine/Core/Physics.hpp>
 
 
 namespace Scene {
@@ -20,16 +20,14 @@ namespace Scene {
             return {.min = {m_Position - m_Size * 0.5f}, .max = {m_Position + m_Size * 0.5f}};
         }
 
-        [[nodiscard]] bool IsEscaped() const {
-            return m_Escape;
+        void OnUpdate(float dt, const std::vector<Engine::Physics::AABB>& walls);
+        void SetPosition(const glm::vec2& position) {
+            m_Position = position;
         }
-
-        void OnUpdate(float dt, const std::vector<Engine::Physics::AABB>& walls, const Engine::Physics::AABB& exit);
 
 
     private:
         glm::vec2 m_Position;
         float m_Size;
-        bool m_Escape = false;
     };
 }
