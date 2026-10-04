@@ -8,10 +8,6 @@ namespace Engine {
         m_Position = m_Camera.GetPosition();
     }
 
-    void OrthographicCameraController::OnUpdate(const float dt) {
-
-    }
-
     bool OrthographicCameraController::OnWindowResize(WindowResizeEvent& event) {
         if (event.GetWidth() == 0 || event.GetHeight() == 0) {
             return false;

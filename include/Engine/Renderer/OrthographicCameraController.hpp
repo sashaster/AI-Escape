@@ -9,7 +9,6 @@ namespace Engine {
     public:
         explicit OrthographicCameraController(float aspect, float zoomLevel = 1.0f, float speed = 1.0);
 
-        void OnUpdate(float dt);
         void OnEvent(Event& event);
         [[nodiscard]] const OrthographicCamera& GetCamera() const {
             return m_Camera;
