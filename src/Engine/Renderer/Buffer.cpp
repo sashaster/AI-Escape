@@ -30,6 +30,7 @@ namespace Engine {
     }
 
     IndexBuffer::IndexBuffer(const std::span<const std::uint32_t> indices): m_Count(indices.size()) {
+        ASSERT(!indices.empty(), "Index buffer cannot be empty")
         glGenBuffers(1, &m_ID);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ID);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size_bytes(), indices.data(), GL_STATIC_DRAW);
