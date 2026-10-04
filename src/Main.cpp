@@ -49,10 +49,6 @@ public:
         m_AgentSprite.transform = m_Agent->GetTransform();
     }
 
-    void OnAttach() override {
-
-    }
-
     void OnUpdate(const float dt) override {
         if (!m_Agent->IsEscaped()) {
             m_Agent->OnUpdate(dt, m_Maze->GetData().walls, m_Maze->GetData().exit);
