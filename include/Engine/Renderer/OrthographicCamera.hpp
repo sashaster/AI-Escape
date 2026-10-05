@@ -13,7 +13,7 @@ namespace Engine {
         [[nodiscard]] const glm::vec2& GetPosition() const {
             return m_Position;
         }
-        void SetPosition(const glm::vec2& position);
+        void SetPosition(glm::vec2 position);
         void SetProjection(float left, float right, float bottom, float top);
 
     private:

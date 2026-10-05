@@ -17,7 +17,7 @@ namespace Engine {
         void Bind() const;
         void Unbind() const;
         ~Shader();
-        void SetFloat4(std::string_view name, const glm::vec4& values) noexcept;
+        void SetFloat4(std::string_view name, glm::vec4 values) noexcept;
         void SetMat4(std::string_view name, const glm::mat4& values) noexcept;
     private:
         void Link(const std::unordered_map<GLenum, std::string> &sources);

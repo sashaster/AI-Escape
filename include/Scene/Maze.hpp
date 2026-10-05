@@ -78,7 +78,7 @@ namespace Scene {
         void Regenerate(std::uint32_t seed);
 
     private:
-        void AddWall(float cx, float cy, float halfW, float halfH, const glm::vec4 &color, bool solid=true);
+        void AddWall(float cx, float cy, float halfW, float halfH, glm::vec4 color, bool solid=true);
         [[nodiscard]] std::pair<float, float> ToWorldSpace(const int x, const int y) const {
             const auto [originX, originY] = GetOrigin();
             return {originX + x * m_Data.cellSize, originY + y * m_Data.cellSize};

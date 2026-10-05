@@ -128,7 +128,7 @@ namespace Engine {
         return shader;
     }
 
-    void Shader::SetFloat4(const std::string_view name, const glm::vec4& values) noexcept {
+    void Shader::SetFloat4(const std::string_view name, const glm::vec4 values) noexcept {
         glUniform4f(glGetUniformLocation(m_ID, name.data()), values.r, values.g, values.b, values.a);
     }
 

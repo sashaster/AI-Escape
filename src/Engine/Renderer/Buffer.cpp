@@ -119,7 +119,7 @@ namespace Engine {
         return 0;
     }
 
-    VertexLayout::VertexLayout(const std::initializer_list<VertexAttribute>& attributes): m_Attributes(attributes) {
+    VertexLayout::VertexLayout(const std::initializer_list<VertexAttribute> attributes): m_Attributes(attributes) {
         CalculateStrideAndOffset();
     }
 

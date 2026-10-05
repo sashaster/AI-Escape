@@ -76,7 +76,7 @@ namespace Scene {
     }
 
     void Maze::AddWall(const float cx, const float cy, const float halfW, const float halfH,
-                        const glm::vec4 &color, const bool solid) {
+                        const glm::vec4 color, const bool solid) {
         const std::uint32_t base = m_Data.vertices.size();
         m_Data.vertices.emplace_back(glm::vec3(cx - halfW, cy - halfH, 0.0f), color);
         m_Data.vertices.emplace_back(glm::vec3(cx - halfW, cy + halfH, 0.0f), color);

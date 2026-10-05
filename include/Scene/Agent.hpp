@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <span>
 
 #include <Engine/Core/Physics.hpp>
 
@@ -8,7 +9,7 @@
 namespace Scene {
     class Agent {
     public:
-        explicit Agent(const glm::vec2& position = glm::vec2(0.0f), const float size = 1.0f)
+        explicit Agent(const glm::vec2 position = glm::vec2(0.0f), const float size = 1.0f)
         : m_Position(position), m_Size(size){}
 
         [[nodiscard]] glm::mat4 GetTransform() const{
@@ -24,7 +25,7 @@ namespace Scene {
             return {.min = {m_Position - m_Size * 0.5f}, .max = {m_Position + m_Size * 0.5f}};
         }
 
-        void OnUpdate(float dt, const std::vector<Engine::Physics::AABB>& walls);
+        void OnUpdate(float dt, std::span<const Engine::Physics::AABB> walls);
         void SetPosition(const glm::vec2 position) {
             m_Position = position;
         }

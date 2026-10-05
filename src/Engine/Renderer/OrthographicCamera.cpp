@@ -13,7 +13,7 @@ namespace Engine {
         m_ViewProjection = m_Projection * m_View;
     }
 
-    void OrthographicCamera::SetPosition(const glm::vec2& position) {
+    void OrthographicCamera::SetPosition(const glm::vec2 position) {
         m_Position = position;
         CalculateViewProjection();
     }

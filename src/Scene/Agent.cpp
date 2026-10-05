@@ -3,7 +3,7 @@
 
 
 namespace Scene {
-
+    using namespace Engine::Physics;
     static constexpr float kAgentSpeed = 20.0f;
 
     glm::vec2 Agent::ReadInput(const float dt) {
@@ -29,12 +29,12 @@ namespace Scene {
         return dir * kAgentSpeed * dt;
     }
 
-    void Agent::OnUpdate(const float dt, const std::vector<Engine::Physics::AABB>& walls) {
+    void Agent::OnUpdate(const float dt, const std::span<const AABB> walls) {
         const auto moveDelta = ReadInput(dt);
         const auto half = m_Size * 0.5f;
         m_Position.x += moveDelta.x;
         for (const auto& wall: walls) {
-            if (Engine::Physics::Overlaps(GetBox(), wall)) {
+            if (Overlaps(GetBox(), wall)) {
                 if (moveDelta.x > 0.0f) {
                     m_Position.x = wall.min.x - half;
                 }
@@ -46,7 +46,7 @@ namespace Scene {
 
         m_Position.y += moveDelta.y;
         for (const auto& wall: walls) {
-            if (Engine::Physics::Overlaps(GetBox(), wall)) {
+            if (Overlaps(GetBox(), wall)) {
                 if (moveDelta.y > 0.0f) {
                     m_Position.y = wall.min.y - half;
                 }

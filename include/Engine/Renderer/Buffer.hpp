@@ -39,7 +39,7 @@ namespace Engine {
     class VertexLayout final {
     public:
         VertexLayout() = default;
-        VertexLayout(const std::initializer_list<VertexAttribute>& attributes);
+        VertexLayout(std::initializer_list<VertexAttribute> attributes);
 
         [[nodiscard]] auto begin() const noexcept {
             return m_Attributes.begin();
