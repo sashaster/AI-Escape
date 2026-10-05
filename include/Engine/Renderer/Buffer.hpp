@@ -64,7 +64,7 @@ namespace Engine {
         glm::vec3 position;
         glm::vec4 color;
 
-        [[nodiscard]] VertexLayout GetLayout() const {
+        [[nodiscard]] static VertexLayout GetLayout(){
             return {
                 {VertexAttribute::AttributeType::Float3, "position"},
                 {VertexAttribute::AttributeType::Float4, "color"}
@@ -80,12 +80,21 @@ namespace Engine {
         [[nodiscard]] const VertexLayout& GetLayout() const {
             return m_Layout;
         }
+        [[nodiscard]] std::uint32_t GetCount() const {
+            return m_Count;
+        }
+
+        void SetData(std::span<const Vertex> vertices);
+
         static std::shared_ptr<VertexBuffer> Create(std::span<const Vertex> vertices);
+        static std::shared_ptr<VertexBuffer> Create(std::uint32_t count);
 
     private:
         explicit VertexBuffer(std::span<const Vertex> vertices);
+        explicit VertexBuffer(std::uint32_t count);
         VertexLayout m_Layout;
         RendererID m_ID;
+        std::uint32_t m_Count;
     };
 
     class IndexBuffer final {

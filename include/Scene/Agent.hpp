@@ -16,15 +16,19 @@ namespace Scene {
             * glm::scale(glm::mat4(1.0f), glm::vec3(m_Size, m_Size, 1.0f));
         }
 
+        [[nodiscard]] glm::vec2 GetPosition() const {
+            return m_Position;
+        }
+
         [[nodiscard]] Engine::Physics::AABB GetBox() const {
             return {.min = {m_Position - m_Size * 0.5f}, .max = {m_Position + m_Size * 0.5f}};
         }
 
         void OnUpdate(float dt, const std::vector<Engine::Physics::AABB>& walls);
-        void SetPosition(const glm::vec2& position) {
+        void SetPosition(const glm::vec2 position) {
             m_Position = position;
         }
-
+        static glm::vec2 ReadInput(float dt);
 
     private:
         glm::vec2 m_Position;

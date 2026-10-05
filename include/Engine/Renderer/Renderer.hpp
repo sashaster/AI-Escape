@@ -14,7 +14,7 @@ namespace Engine {
 
     class Renderer {
     public:
-        static void Draw(const Sprite& sprite, const OrthographicCamera& camera);
+        static void Draw(const Sprite& sprite, const OrthographicCamera& camera, bool lines = false);
         static void Clear();
         static void SetViewport(int width, int height);
     };

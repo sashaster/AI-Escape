@@ -58,8 +58,7 @@ namespace Scene {
             float wallThickness;
             std::vector<Engine::Physics::AABB> walls;
             Engine::Physics::AABB exit;
-
-        } m_Data;
+        };
 
         [[nodiscard]] glm::vec2 operator[](const int x, const int y) const {
             const auto [cellX, cellY] = ToWorldSpace(x, y);
@@ -85,6 +84,7 @@ namespace Scene {
             return {originX + x * m_Data.cellSize, originY + y * m_Data.cellSize};
         }
         MazeGrid m_Grid;
+        MazeData m_Data;
     };
 
 

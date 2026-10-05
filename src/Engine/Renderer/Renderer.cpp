@@ -8,12 +8,17 @@ namespace Engine {
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
-    void Renderer::Draw(const Sprite &sprite, const OrthographicCamera& camera) {
+    void Renderer::Draw(const Sprite &sprite, const OrthographicCamera& camera, const bool lines) {
         sprite.VA->Bind();
         sprite.shader->Bind();
         sprite.shader->SetMat4("u_ViewProjection", camera.GetViewProjection());
         sprite.shader->SetMat4("u_Model", sprite.transform);
-        glDrawElements(GL_TRIANGLES, sprite.VA->GetIndexBuffer().GetCount(), GL_UNSIGNED_INT, nullptr);
+        if (!lines) {
+            glDrawElements(GL_TRIANGLES, sprite.VA->GetIndexBuffer().GetCount(), GL_UNSIGNED_INT, nullptr);
+        }
+        else {
+            glDrawArrays(GL_LINES, 0, sprite.VA->GetBuffers().front()->GetCount());
+        }
     }
 
     void Renderer::SetViewport(const int width, const int height) {

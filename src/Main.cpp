@@ -10,6 +10,9 @@
 #include <Scene/Agent.hpp>
 
 
+static std::array<Engine::Vertex, 8> s_Lines;
+static glm::vec4 s_LineColor = {1.0f, 1.0f, 1.0f, 1.0f};
+
 class Simulation final: public Engine::Layer {
 public:
     Simulation(): m_Maze(Scene::MazeGrid(10, 10), 10.0f, 0.5f),
@@ -38,20 +41,36 @@ public:
         m_AgentSprite.shader = shader;
 
         m_Agent = std::make_unique<Scene::Agent>(glm::vec3(m_Maze[0, 0], 0.0f), m_Maze.GetData().cellSize * 0.5f);
-        m_AgentSprite.transform = m_Agent->GetTransform();
+
+        m_LinesSprite.shader = shader;
+        const auto linesVB = Engine::VertexBuffer::Create(8);
+        const auto linesVA = Engine::VertexArray::Create();
+        linesVA->AddVertexBuffer(linesVB);
+        m_LinesSprite.VA = linesVA;
     }
+
 
     void OnUpdate(const float dt) override {
         m_Agent->OnUpdate(dt, m_Maze.GetData().walls);
-
         if (Engine::Physics::Overlaps(m_Agent->GetBox(), m_Maze.GetData().exit)) {
             RegenerateMaze();
             m_Agent->SetPosition(m_Maze[0, 0]);
         }
+
+        const auto [up, right, down, left] = Engine::Physics::RayCast(m_Agent->GetBox(), m_Maze.GetData().walls);
+        TRACE("UP: {} RIGHT: {} DOWN: {} LEFT: {}", up.distance, right.distance, down.distance, left.distance);
         m_AgentSprite.transform = m_Agent->GetTransform();
         Engine::Renderer::Clear();
         Engine::Renderer::Draw(m_MazeSprite, m_CameraController.GetCamera());
         Engine::Renderer::Draw(m_AgentSprite, m_CameraController.GetCamera());
+
+        for (auto i = 0; const auto& ray: {up, right, down, left}) {
+            s_Lines[i++] = {.position = {ray.start.x, ray.start.y, 0.0f}, .color = s_LineColor};
+            s_Lines[i++] = {.position = {ray.end.x, ray.end.y, 0.0f}, .color = s_LineColor};
+        }
+        m_LinesSprite.VA->GetBuffers()
+                     .front()->SetData(s_Lines);
+        Engine::Renderer::Draw(m_LinesSprite, m_CameraController.GetCamera(), true);
     }
 
     void OnEvent(Engine::Event &event) override {
@@ -61,6 +80,7 @@ public:
 private:
     Engine::Sprite m_MazeSprite;
     Engine::Sprite m_AgentSprite;
+    Engine::Sprite m_LinesSprite;
     Scene::Maze m_Maze;
     std::unique_ptr<Scene::Agent> m_Agent;
     Engine::OrthographicCameraController m_CameraController;
@@ -78,6 +98,7 @@ private:
         mazeVA->SetIndexBuffer(mazeIB);
         m_MazeSprite.VA = mazeVA;
     }
+
 };
 
 

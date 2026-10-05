@@ -18,6 +18,9 @@ namespace Engine {
         [[nodiscard]] const IndexBuffer& GetIndexBuffer() const {
             return *m_IndexBuffer;
         }
+        [[nodiscard]] const auto& GetBuffers() const {
+            return m_VertexBuffers;
+        }
 
         ~VertexArray();
     private:

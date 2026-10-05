@@ -10,11 +10,28 @@ namespace Engine {
         glGenBuffers(1, &m_ID);
         glBindBuffer(GL_ARRAY_BUFFER, m_ID);
         glBufferData(GL_ARRAY_BUFFER, vertices.size_bytes(), vertices.data(), GL_STATIC_DRAW);
-        m_Layout = vertices.front().GetLayout();
+        m_Layout = Vertex::GetLayout();
+    }
+
+    VertexBuffer::VertexBuffer(const std::uint32_t count): m_Count(count) {
+        ASSERT(count > 0, "VertexBuffer capacity must be greater than 0")
+        glGenBuffers(1, &m_ID);
+        glBindBuffer(GL_ARRAY_BUFFER, m_ID);
+        glBufferData(GL_ARRAY_BUFFER, m_Count * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+        m_Layout = Vertex::GetLayout();
     }
 
     std::shared_ptr<VertexBuffer> VertexBuffer::Create(const std::span<const Vertex> vertices) {
         return std::shared_ptr<VertexBuffer>(new VertexBuffer(vertices));
+    }
+
+    std::shared_ptr<VertexBuffer> VertexBuffer::Create(const std::uint32_t count) {
+        return std::shared_ptr<VertexBuffer>(new VertexBuffer(count));
+    }
+
+    void VertexBuffer::SetData(const std::span<const Vertex> vertices) {
+        glBindBuffer(GL_ARRAY_BUFFER, m_ID);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size_bytes(), vertices.data());
     }
 
     VertexBuffer::~VertexBuffer() {
