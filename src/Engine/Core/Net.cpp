@@ -13,7 +13,7 @@ namespace Engine {
 
     void Net::Init() {
         INFO("Starting server...");
-        s_Hints.sin_family = AF_INET6;
+        s_Hints.sin_family = AF_INET;
         s_Hints.sin_port = htons(ServerPort);
         s_Hints.sin_addr.s_addr = htonl(INADDR_ANY);
 
