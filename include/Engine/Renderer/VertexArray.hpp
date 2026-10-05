@@ -12,13 +12,13 @@ namespace Engine {
     public:
         void Bind() const;
         void Unbind() const;
-        static std::shared_ptr<VertexArray> Create();
+        [[nodiscard]] static std::shared_ptr<VertexArray> Create();
         void SetIndexBuffer(const std::shared_ptr<IndexBuffer>& indexBuffer);
         void AddVertexBuffer(const std::shared_ptr<VertexBuffer>& vertexBuffer);
-        [[nodiscard]] const IndexBuffer& GetIndexBuffer() const {
-            return *m_IndexBuffer;
+        [[nodiscard]] auto& GetIndexBuffer() const {
+            return m_IndexBuffer;
         }
-        [[nodiscard]] const auto& GetBuffers() const {
+        [[nodiscard]] auto& GetBuffers() const {
             return m_VertexBuffers;
         }
 

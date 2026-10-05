@@ -5,7 +5,7 @@
 
 
 namespace Engine {
-    VertexBuffer::VertexBuffer(const std::span<const Vertex> vertices) {
+    VertexBuffer::VertexBuffer(const std::span<const Vertex> vertices): m_Count(vertices.size()) {
         ASSERT(!vertices.empty(), "Vertex buffer cannot be empty")
         glGenBuffers(1, &m_ID);
         glBindBuffer(GL_ARRAY_BUFFER, m_ID);
@@ -14,7 +14,7 @@ namespace Engine {
     }
 
     VertexBuffer::VertexBuffer(const std::uint32_t count): m_Count(count) {
-        ASSERT(count > 0, "VertexBuffer capacity must be greater than 0")
+        ASSERT(m_Count > 0, "VertexBuffer capacity must be greater than 0")
         glGenBuffers(1, &m_ID);
         glBindBuffer(GL_ARRAY_BUFFER, m_ID);
         glBufferData(GL_ARRAY_BUFFER, m_Count * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
@@ -30,6 +30,7 @@ namespace Engine {
     }
 
     void VertexBuffer::SetData(const std::span<const Vertex> vertices) {
+        ASSERT(vertices.size() <= m_Count, "VertexBuffer overflow")
         glBindBuffer(GL_ARRAY_BUFFER, m_ID);
         glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size_bytes(), vertices.data());
     }

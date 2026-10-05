@@ -14,7 +14,7 @@ namespace Engine {
         sprite.shader->SetMat4("u_ViewProjection", camera.GetViewProjection());
         sprite.shader->SetMat4("u_Model", sprite.transform);
         if (!lines) {
-            glDrawElements(GL_TRIANGLES, sprite.VA->GetIndexBuffer().GetCount(), GL_UNSIGNED_INT, nullptr);
+            glDrawElements(GL_TRIANGLES, sprite.VA->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);
         }
         else {
             glDrawArrays(GL_LINES, 0, sprite.VA->GetBuffers().front()->GetCount());

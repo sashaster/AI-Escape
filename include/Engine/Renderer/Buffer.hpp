@@ -86,8 +86,8 @@ namespace Engine {
 
         void SetData(std::span<const Vertex> vertices);
 
-        static std::shared_ptr<VertexBuffer> Create(std::span<const Vertex> vertices);
-        static std::shared_ptr<VertexBuffer> Create(std::uint32_t count);
+        [[nodiscard]] static std::shared_ptr<VertexBuffer> Create(std::span<const Vertex> vertices);
+        [[nodiscard]] static std::shared_ptr<VertexBuffer> Create(std::uint32_t count);
 
     private:
         explicit VertexBuffer(std::span<const Vertex> vertices);
@@ -99,7 +99,7 @@ namespace Engine {
 
     class IndexBuffer final {
     public:
-        static std::shared_ptr<IndexBuffer> Create(std::span<const std::uint32_t> indices);
+        [[nodiscard]] static std::shared_ptr<IndexBuffer> Create(std::span<const std::uint32_t> indices);
         [[nodiscard]] std::uint32_t GetCount() const {
             return m_Count;
         }
