@@ -4,6 +4,8 @@
 #include <Engine/Core/Core.hpp>
 #include <Engine/Renderer/Renderer.hpp>
 #include <Engine/Events/ApplicationEvent.hpp>
+#include <Engine/Events/KeyEvent.hpp>
+#include <Engine/Events/MouseEvent.hpp>
 
 
 namespace Engine {
@@ -40,16 +42,78 @@ namespace Engine {
             data->eventCallback(event);
         });
 
-        glfwSetFramebufferSizeCallback(m_Handle.get(), [](GLFWwindow* window, int width, int height) {
+        glfwSetFramebufferSizeCallback(m_Handle.get(), [](GLFWwindow* window, const int width, const int height) {
             const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
             ASSERT(data, "Window data is null");
 
-            data->width = width;
+            data->framebufferWidth = width;
+            data->framebufferHeight = height;
+            FramebufferResizeEvent event(width, height);
+            data->eventCallback(event);
+        });
+
+        glfwSetWindowSizeCallback(m_Handle.get(), [](GLFWwindow* window, const int width, const int height) {
+            const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+            ASSERT(data, "Window data is null");
+
+            data->width= width;
             data->height = height;
-            Renderer::SetViewport(width, height);
             WindowResizeEvent event(width, height);
             data->eventCallback(event);
         });
+
+        glfwSetMouseButtonCallback(m_Handle.get(), [](GLFWwindow* window, const int button, const int action, const int mods) {
+            const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+            ASSERT(data, "Window data is null");
+            switch (action) {
+                case GLFW_PRESS: {
+                    MouseButtonPressedEvent event(button);
+                    data->eventCallback(event);
+                    break;
+                }
+                case GLFW_RELEASE: {
+                    MouseButtonReleasedEvent event(button);
+                    data->eventCallback(event);
+                }
+                default:
+            }
+        });
+
+        glfwSetScrollCallback(m_Handle.get(), [](GLFWwindow* window, const double xoffset, const double yoffset) {
+            const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+            ASSERT(data, "Window data is null");
+            MouseScrolledEvent event(static_cast<float>(xoffset), static_cast<float>(yoffset));
+            data->eventCallback(event);
+        });
+
+        glfwSetCursorPosCallback(m_Handle.get(), [](GLFWwindow* window, const double xpos, const double ypos) {
+            const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+            ASSERT(data, "Window data is null");
+            MouseMovedEvent event(static_cast<float>(xpos), static_cast<float>(ypos));
+            data->eventCallback(event);
+        });
+
+        glfwSetKeyCallback(m_Handle.get(), [](GLFWwindow* window, const int key, const int scancode, const int action, const int mods) {
+            const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+            ASSERT(data, "Window data is null");
+            switch (action) {
+                case GLFW_PRESS: {
+                    KeyPressedEvent event(key);
+                    data->eventCallback(event);
+                    break;
+                }
+                case GLFW_RELEASE: {
+                    KeyReleasedEvent event(key);
+                    data->eventCallback(event);
+                    break;
+                }
+                default:
+            }
+        });
+
+
+        glfwGetFramebufferSize(m_Handle.get(), &m_Data.framebufferWidth, &m_Data.framebufferHeight);
+        Renderer::SetViewport(m_Data.framebufferWidth, m_Data.framebufferHeight);
     }
 
     void Window::OnUpdate() {

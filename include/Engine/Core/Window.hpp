@@ -28,6 +28,21 @@ namespace Engine {
         [[nodiscard]] GLFWwindow* GetHandle() const {
             return m_Handle.get();
         }
+        [[nodiscard]] int GetWidth() const {
+            return m_Data.width;
+        }
+
+        [[nodiscard]] int GetHeight() const {
+            return m_Data.height;
+        }
+
+        [[nodiscard]] int GetFramebufferWidth() const {
+            return m_Data.framebufferWidth;
+        }
+
+        [[nodiscard]] int GetFramebufferHeight() const {
+            return m_Data.framebufferHeight;
+        }
 
     private:
         void Init();
@@ -36,6 +51,8 @@ namespace Engine {
             std::string title;
             int width;
             int height;
+            int framebufferWidth;
+            int framebufferHeight;
 
             EventFn eventCallback;
 

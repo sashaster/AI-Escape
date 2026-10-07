@@ -8,7 +8,13 @@ namespace Engine {
         None,
         WindowClose,
         WindowResize,
-        KeyPressed
+        FramebufferResize,
+        MouseMoved,
+        MouseButtonPressed,
+        MouseButtonReleased,
+        MouseScrolled,
+        KeyPressed,
+        KeyReleased
     };
 
 #define EVENT_TYPE(type) \

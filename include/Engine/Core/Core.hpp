@@ -10,6 +10,37 @@ namespace Engine {
     inline constexpr int WindowWidth = 1280;
     inline constexpr int WindowHeight = 720;
     inline constexpr std::uint16_t ServerPort = 8080;
+
+    class Stats {
+    public:
+        void Update(const float dt) {
+            m_Time += dt;
+            ++m_Frames;
+
+            if (m_Time >= 1.0f) {
+                m_FPS = static_cast<float>(m_Frames) / m_Time;
+                m_FrameTime = m_Time / static_cast<float>(m_Frames);
+                m_Time = 0.0f;
+                m_Frames = 0;
+            }
+        }
+
+        [[nodiscard]] float GetFPS() const {
+            return m_FPS;
+        }
+
+        [[nodiscard]] float GetFrameTime() const {
+            return m_FrameTime * 1000.0f;
+        }
+
+    private:
+        float m_Time = 0.0f;
+        int m_Frames = 0;
+        float m_FPS = 0.0f;
+        float m_FrameTime = 0.0f;
+
+    };
+
 }
 
 #ifndef NDEBUG

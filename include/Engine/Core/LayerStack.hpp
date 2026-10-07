@@ -10,6 +10,7 @@ namespace Engine {
     class LayerStack {
     public:
         void PushLayer(std::unique_ptr<Layer> layer);
+        void PushOverlay(std::unique_ptr<Layer> layer);
 
         auto end() {
             return m_Layers.end();
@@ -29,6 +30,8 @@ namespace Engine {
 
     private:
         std::vector<std::unique_ptr<Layer>> m_Layers;
+        int m_InsertIndex = 0;
+
 
 
     };

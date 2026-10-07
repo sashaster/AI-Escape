@@ -1,9 +1,9 @@
+#include <array>
+
 #include <Engine/Core/Physics.hpp>
 
 
 namespace Engine::Physics {
-
-    static constexpr float kMaxDistance = 10.0f;
 
     static bool Touches(const AABB box, const AABB wall) {
         return box.min.x <= wall.max.x &&
@@ -21,8 +21,7 @@ namespace Engine::Physics {
         return false;
     }
 
-    static Ray RayCast(const glm::vec2 origin, glm::vec2 dir, const std::span<const AABB> walls, const float maxDist) {
-        dir = glm::normalize(dir);
+    static Ray RayCast(const glm::vec2 origin, const glm::vec2 dir, const std::span<const AABB> walls, const float maxDist) {
         constexpr auto step = 0.1f;
         const auto stepCount = static_cast<int>(std::round(maxDist/step));
         for (auto i = 0; i <= stepCount; ++i) {
@@ -34,15 +33,23 @@ namespace Engine::Physics {
         return {.hit = false, .distance = maxDist, .start = origin, .end = origin + dir * maxDist};
     }
 
-    std::tuple<Ray, Ray, Ray, Ray> RayCast(const AABB box, const std::span<const AABB> walls) {
-        const auto [min, max] = box;
+    std::vector<Ray> RayCast(const AABB box, const std::span<const AABB> walls, const float maxDist) {
         const auto center = box.Center();
-        return {
-            RayCast({center.x, max.y}, {0.0f, 1.0f}, walls, kMaxDistance),
-            RayCast({max.x, center.y}, {1.0f, 0.0f}, walls, kMaxDistance),
-            RayCast({center.x, min.y}, {0.0f, -1.0f}, walls, kMaxDistance),
-            RayCast({min.x, center.y}, {-1.0f, 0.0f}, walls, kMaxDistance)
-        };
+        const auto half = box.HalfSize();
+        std::vector<Ray> rays;
+        rays.reserve(8);
+
+        for (auto y = 1; y >= -1; --y) {
+            for (auto x = -1; x <= 1; ++x) {
+                if (x == 0 && y == 0) {
+                    continue;
+                }
+                const auto dir = glm::vec2(static_cast<float>(x), static_cast<float>(y));
+                const auto origin = center + dir * half;
+                rays.push_back(RayCast(origin, glm::normalize(dir), walls, maxDist));
+            }
+        }
+        return rays;
     }
 
     bool Overlaps(const AABB box, const std::span<const AABB> walls) {

@@ -3,19 +3,30 @@
 
 
 namespace Engine {
-
-
-    class KeyPressedEvent final: public Event{
+    class KeyEvent : public Event {
     public:
-        explicit KeyPressedEvent(const int keyCode): m_KeyCode(keyCode){}
-        [[nodiscard]] int GetKey() const noexcept {
+        [[nodiscard]] int GetKeyCode() const {
             return m_KeyCode;
         }
 
-        EVENT_TYPE(KeyPressed)
+    protected:
+        explicit KeyEvent(const int keycode) : m_KeyCode(keycode) {
+        }
 
-    private:
         int m_KeyCode;
     };
 
+    class KeyPressedEvent final : public KeyEvent {
+    public:
+        explicit KeyPressedEvent(const int keycode) : KeyEvent(keycode) {}
+
+        EVENT_TYPE(KeyPressed)
+    };
+
+    class KeyReleasedEvent final : public KeyEvent {
+    public:
+        explicit KeyReleasedEvent(const int keycode) : KeyEvent(keycode) {}
+
+        EVENT_TYPE(KeyReleased)
+    };
 }

@@ -6,6 +6,7 @@
 #include <Engine/Core/Core.hpp>
 #include <Engine/Renderer/Buffer.hpp>
 #include <Engine/Renderer/Renderer.hpp>
+#include <Engine/ImGui/ImGuiLayer.hpp>
 
 
 namespace Engine {
@@ -15,6 +16,9 @@ namespace Engine {
         s_Instance = this;
         m_Window = std::make_unique<Window>("AI-Escape", WindowWidth, WindowHeight);
         m_Window->SetEventCallback([this](Event& e) { OnEvent(e); });
+        auto imgui = std::make_unique<ImGuiLayer>();
+        m_ImGuiLayer = imgui.get();
+        PushOverlay(std::move(imgui));
     }
 
     Application::GLFW::~GLFW() {
@@ -30,15 +34,22 @@ namespace Engine {
 
     void Application::Run() {
         INFO("Engine is running");
-        float lastFrame = 0.0f;
+        auto lastFrame = glfwGetTime();
         while (m_Running){
-            const auto time = static_cast<float>(glfwGetTime());
-            const auto dt = time - lastFrame;
+            const auto time = glfwGetTime();
+            const auto dt = static_cast<float>(time - lastFrame);
             lastFrame = time;
+            m_Stats.Update(dt);
             if (!m_Minimized) {
                 for (const auto& layer: m_LayerStack) {
                     layer->OnUpdate(dt);
                 }
+
+                m_ImGuiLayer->Begin(dt);
+                for (const auto& layer: m_LayerStack) {
+                    layer->OnImGuiRender();
+                }
+                m_ImGuiLayer->End();
             }
             m_Window->OnUpdate();
         }
@@ -51,6 +62,9 @@ namespace Engine {
         });
         dispatcher.Dispatch<WindowResizeEvent>([this](WindowResizeEvent& e) {
             return OnWindowResize(e);
+        });
+        dispatcher.Dispatch<FramebufferResizeEvent>([this](FramebufferResizeEvent& e) {
+            return OnFramebufferResize(e);
         });
         for (auto it = m_LayerStack.rbegin(); it != m_LayerStack.rend(); ++it) {
             (*it)->OnEvent(event);
@@ -69,10 +83,19 @@ namespace Engine {
     bool Application::OnWindowResize(WindowResizeEvent& event) {
         if (event.GetWidth() == 0 || event.GetHeight() == 0) {
             m_Minimized = true;
-            return false;
+            return true;
         }
         m_Minimized = false;
+        return false;
+    }
+
+    bool Application::OnFramebufferResize(FramebufferResizeEvent& event) {
+        if (event.GetWidth() == 0 || event.GetHeight() == 0) {
+            m_Minimized = true;
+            return true;
+        }
         Renderer::SetViewport(event.GetWidth(), event.GetHeight());
+        m_Minimized = false;
         return false;
     }
 }

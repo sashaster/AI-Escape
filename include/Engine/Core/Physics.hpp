@@ -1,7 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <vector>
-#include <tuple>
 #include <span>
 
 
@@ -14,6 +13,10 @@ namespace Engine::Physics{
         [[nodiscard]] glm::vec2 Center() const {
             return (min + max) * 0.5f;
         }
+
+        [[nodiscard]] glm::vec2 HalfSize() const {
+            return (max - min) * 0.5f;
+        }
     };
 
     struct Ray {
@@ -23,7 +26,7 @@ namespace Engine::Physics{
         glm::vec2 end;
     };
 
-    std::tuple<Ray, Ray, Ray, Ray> RayCast(AABB box, std::span<const AABB> walls);
+    std::vector<Ray> RayCast(AABB box, std::span<const AABB> walls, float maxDist);
 
     bool Overlaps(AABB box, std::span<const AABB> walls);
     bool Overlaps(AABB box, AABB wall);
