@@ -5,6 +5,7 @@
 #include <Engine/Core/Core.hpp>
 #include <Engine/Renderer/Buffer.hpp>
 #include <Engine/Core/Physics.hpp>
+#include <Scene/Agent.hpp>
 
 
 namespace Scene {
@@ -14,10 +15,9 @@ namespace Scene {
         bool wallN = true, wallS = true, wallE = true, wallW = true;
     };
 
-
     class MazeGrid {
     public:
-        MazeGrid(const int width, const int height) : m_Width(width), m_Height(height), m_Cells(width * height) {
+        MazeGrid(const int width, const int height) : m_Width(width), m_Height(height), m_Cells(m_Width * m_Height) {
             ASSERT(m_Width > 0 && m_Height > 0, "Invalid grid dimensions")
         }
 
@@ -46,45 +46,65 @@ namespace Scene {
         std::vector<MazeCell> m_Cells;
     };
 
-
     class Maze {
     public:
-        struct MazeData {
-            std::vector<Engine::Vertex> vertices;
-            std::vector<std::uint32_t> indices;
-            float width;
-            float height;
-            float cellSize;
-            float wallThickness;
-            std::vector<Engine::Physics::AABB> walls;
-            Engine::Physics::AABB exit;
-        };
-
         [[nodiscard]] glm::vec2 operator[](const int x, const int y) const {
-            const auto [cellX, cellY] = ToWorldSpace(x, y);
-            return {cellX + m_Data.cellSize * 0.5f, cellY + m_Data.cellSize * 0.5f};
+            return GridToWorld(x, y) + glm::vec2(m_CellSize * 0.5f);
         }
 
-        [[nodiscard]] std::pair<float, float> GetOrigin() const {
-            return {-m_Data.width * 0.5f, -m_Data.height * 0.5f};
+        [[nodiscard]] glm::vec2 Origin() const {
+            return {-m_Width * 0.5f, -m_Height * 0.5f};
         }
 
-        Maze(const MazeGrid& grid, float cellSize, float wallThickness);
-        void BuildMaze();
-        [[nodiscard]] const MazeData& GetData() const {
-            return m_Data;
+        [[nodiscard]] const MazeGrid& GetGrid() const{
+            return m_Grid;
         }
 
-        void Regenerate(std::uint32_t seed);
+        [[nodiscard]] float GetCellSize() const {
+            return m_CellSize;
+        }
+
+        [[nodiscard]] float GetWallThickness() const {
+            return m_WallThickness;
+        }
+
+        [[nodiscard]] std::uint32_t GetSeed() const {
+            return m_Seed;
+        }
+
+        [[nodiscard]] glm::ivec2 GetExitCell() const {
+            return m_ExitCell;
+        }
+        Maze(int gridWidth, int gridHeight, float cellSize, float wallThickness, glm::ivec2 exitCell, std::uint32_t seed = std::random_device{}());
+
+        void Generate(std::uint32_t seed);
+        [[nodiscard]] glm::vec2 GridToWorld(const int x, const int y) const {
+            return Origin() + glm::vec2(x, y) * m_CellSize;
+        }
+        [[nodiscard]] std::span<const Engine::Physics::AABB> GetWalls() const {
+            return m_Walls;
+        }
+        [[nodiscard]] Engine::Physics::AABB GetExit() const {
+            return m_Exit;
+        }
+        [[nodiscard]] float GetWidth() const {
+            return m_Width;
+        }
+        [[nodiscard]] float GetHeight() const {
+            return m_Height;
+        }
 
     private:
-        void AddWall(float cx, float cy, float halfW, float halfH, glm::vec4 color, bool solid=true);
-        [[nodiscard]] std::pair<float, float> ToWorldSpace(const int x, const int y) const {
-            const auto [originX, originY] = GetOrigin();
-            return {originX + x * m_Data.cellSize, originY + y * m_Data.cellSize};
-        }
+        void BuildColliders();
+        std::vector<Engine::Physics::AABB> m_Walls;
+        Engine::Physics::AABB m_Exit;
+        glm::ivec2 m_ExitCell;
         MazeGrid m_Grid;
-        MazeData m_Data;
+        float m_Width;
+        float m_Height;
+        float m_CellSize;
+        float m_WallThickness;
+        std::uint32_t m_Seed;
     };
 
 

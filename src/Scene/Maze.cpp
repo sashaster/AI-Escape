@@ -3,6 +3,7 @@
 
 
 #include <Scene/Maze.hpp>
+#include <Scene/Agent.hpp>
 
 namespace Scene {
 
@@ -75,71 +76,54 @@ namespace Scene {
         }
     }
 
-    void Maze::AddWall(const float cx, const float cy, const float halfW, const float halfH,
-                        const glm::vec4 color, const bool solid) {
-        const std::uint32_t base = m_Data.vertices.size();
-        m_Data.vertices.emplace_back(glm::vec3(cx - halfW, cy - halfH, 0.0f), color);
-        m_Data.vertices.emplace_back(glm::vec3(cx - halfW, cy + halfH, 0.0f), color);
-        m_Data.vertices.emplace_back(glm::vec3(cx + halfW, cy + halfH, 0.0f), color);
-        m_Data.vertices.emplace_back(glm::vec3(cx + halfW, cy - halfH, 0.0f), color);
-        m_Data.indices.insert(m_Data.indices.end(), {base, base + 1, base + 2, base + 2, base + 3, base});
-        if (solid) {
-            m_Data.walls.push_back({.min = {cx - halfW, cy - halfH}, .max = {cx + halfW, cy + halfH}});
-        }
+    static Engine::Physics::AABB Box(const float cx, const float cy, const float halfW, const float halfH) {
+        return {.min = {cx - halfW, cy - halfH}, .max = {cx + halfW, cy + halfH}};
     }
 
-    Maze::Maze(const MazeGrid& grid, const float cellSize, const float wallThickness): m_Grid(grid){
-        m_Data.width = m_Grid.GetWidth() * cellSize;
-        m_Data.height = m_Grid.GetHeight() * cellSize;
-        m_Data.cellSize = cellSize;
-        m_Data.wallThickness = wallThickness;
-        Regenerate(std::random_device{}());
-    }
-
-    void Maze::Regenerate(const std::uint32_t seed) {
-        m_Grid.Generate(seed);
-        m_Grid[m_Grid.GetWidth() - 1, m_Grid.GetHeight() - 1].wallN = false;
-        m_Data.indices.clear();
-        m_Data.vertices.clear();
-        m_Data.walls.clear();
-        BuildMaze();
-    }
-
-    void Maze::BuildMaze() {
-        constexpr auto wallColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-        constexpr auto floorColor = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
-        constexpr auto exitColor = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-        const float cs = m_Data.cellSize;
-        const float wt = m_Data.wallThickness;
+    void Maze::BuildColliders() {
         for (auto y = 0; y < m_Grid.GetHeight(); ++y) {
             for (auto x = 0; x < m_Grid.GetWidth(); ++x) {
-                const bool isExit = (y == m_Grid.GetHeight() - 1 && x == m_Grid.GetWidth() - 1);
                 const auto &cell = m_Grid[x, y];
-                const auto [cellX, cellY] = ToWorldSpace(x, y);
-                AddWall(cellX + cs * 0.5f, cellY + cs * 0.5f, cs * 0.5f, cs * 0.5f, floorColor, false);
+                const auto cellPos = GridToWorld(x, y);
                 if (cell.wallN) {
-                    AddWall(cellX + cs * 0.5f,  cellY + cs,  cs * 0.5f, wt * 0.5f, wallColor);
+                    m_Walls.emplace_back(Box(cellPos.x + m_CellSize * 0.5f,  cellPos.y + m_CellSize,  m_CellSize * 0.5f, m_WallThickness * 0.5f));
                 }
-
-                if (isExit) {
-                    const float topY = cellY + cs;
-                    const float ecy = topY + cs * 0.5f;
-                    AddWall(cellX + cs * 0.5f, ecy,cs * 0.5f, cs * 0.5f, exitColor, false);
-                    m_Data.exit = {.min = {cellX, topY}, .max = {cellX + cs, topY + cs}};
+                if (m_ExitCell.x == x && m_ExitCell.y == y) {
+                    const float topY = cellPos.y + m_CellSize;
+                    m_Exit = {.min = {cellPos.x, topY}, .max = {cellPos.x + m_CellSize, topY + m_CellSize}};
                 }
                 if (cell.wallE) {
-                    AddWall(cellX + cs, cellY + cs * 0.5f, wt * 0.5f, cs* 0.5f,
-                            wallColor);
+                    m_Walls.emplace_back(Box(cellPos.x + m_CellSize, cellPos.y + m_CellSize * 0.5f, m_WallThickness * 0.5f, m_CellSize * 0.5f));
                 }
                 if (y == 0 && cell.wallS) {
-                    AddWall(cellX + cs * 0.5f, cellY, cs * 0.5f, wt * 0.5f, wallColor);
+                    m_Walls.emplace_back(Box(cellPos.x + m_CellSize * 0.5f, cellPos.y, m_CellSize * 0.5f, m_WallThickness * 0.5f));
                 }
                 if (x == 0 && cell.wallW) {
-                    AddWall(cellX, cellY + cs * 0.5f, wt * 0.5f, cs * 0.5f, wallColor);
+                    m_Walls.emplace_back(Box(cellPos.x, cellPos.y + m_CellSize * 0.5f, m_WallThickness * 0.5f, m_CellSize * 0.5f));
                 }
             }
         }
+    }
 
+    Maze::Maze(const int gridWidth, const int gridHeight, const float cellSize, const float wallThickness, const glm::ivec2 exitCell, const std::uint32_t seed): m_Exit(glm::vec2(0.0f), glm::vec2(1.0f)),
+                m_ExitCell(exitCell),
+                m_Grid(gridWidth, gridHeight),
+                m_Width(static_cast<float>(m_Grid.GetWidth()) * cellSize),
+                m_Height(static_cast<float>(m_Grid.GetHeight()) * cellSize),
+                m_CellSize(cellSize),
+                m_WallThickness(wallThickness),
+                m_Seed(seed)
+    {
+        ASSERT((m_ExitCell.x >= 0) && (m_ExitCell.x < m_Grid.GetWidth()) && (m_ExitCell.y == m_Grid.GetHeight() - 1), "Invalid exit cell")
+        Generate(seed);
+    }
+
+    void Maze::Generate(const std::uint32_t seed) {
+        m_Seed = seed;
+        m_Grid.Generate(seed);
+        m_Grid[m_ExitCell.x, m_ExitCell.y].wallN = false;
+        m_Walls.clear();
+        BuildColliders();
     }
 
 }

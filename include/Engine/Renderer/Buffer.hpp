@@ -12,6 +12,8 @@
 
 namespace Engine {
 
+    using RendererID = GLuint;
+
     class VertexLayout;
 
     struct VertexAttribute final {
@@ -70,6 +72,8 @@ namespace Engine {
                 {VertexAttribute::AttributeType::Float4, "color"}
             };
         }
+
+        bool operator==(const Vertex&) const = default;
     };
 
     class VertexBuffer final {

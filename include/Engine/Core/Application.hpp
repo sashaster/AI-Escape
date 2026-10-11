@@ -11,6 +11,9 @@
 
 namespace Engine {
 
+    inline constexpr int kWindowWidth = 1280;
+    inline constexpr int kWindowHeight = 720;
+
     class Application {
     public:
         Application();

@@ -8,10 +8,10 @@ namespace Engine {
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
-    void Renderer::Draw(const Sprite &sprite, const OrthographicCamera& camera, const bool lines) {
+    void Renderer::Draw(const Sprite &sprite, const glm::mat4& viewProjection, const bool lines) {
         sprite.VA->Bind();
         sprite.shader->Bind();
-        sprite.shader->SetMat4("u_ViewProjection", camera.GetViewProjection());
+        sprite.shader->SetMat4("u_ViewProjection", viewProjection);
         sprite.shader->SetMat4("u_Model", sprite.transform);
         if (!lines) {
             glDrawElements(GL_TRIANGLES, sprite.VA->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);

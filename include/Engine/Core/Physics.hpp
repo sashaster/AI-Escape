@@ -7,6 +7,7 @@
 namespace Engine::Physics{
 
     struct AABB {
+
         glm::vec2 min;
         glm::vec2 max;
 
@@ -26,7 +27,7 @@ namespace Engine::Physics{
         glm::vec2 end;
     };
 
-    std::vector<Ray> RayCast(AABB box, std::span<const AABB> walls, float maxDist);
+    std::vector<Ray> RayCast(AABB box, std::span<const AABB> walls, std::span<const float> angles, float maxDist);
 
     bool Overlaps(AABB box, std::span<const AABB> walls);
     bool Overlaps(AABB box, AABB wall);

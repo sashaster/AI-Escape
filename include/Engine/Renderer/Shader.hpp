@@ -7,6 +7,7 @@
 
 
 #include <Engine/Core/Core.hpp>
+#include <Engine/Renderer/Buffer.hpp>
 
 
 namespace Engine {

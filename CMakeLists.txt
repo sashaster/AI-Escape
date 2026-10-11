@@ -28,6 +28,7 @@ FetchContent_Declare(
         GIT_TAG v1.17.0
         GIT_SHALLOW TRUE
 )
+
 FetchContent_Declare(
         glad
         GIT_REPOSITORY https://github.com/Dav1dde/glad.git
@@ -35,6 +36,7 @@ FetchContent_Declare(
         GIT_SHALLOW TRUE
         SOURCE_SUBDIR cmake
 )
+
 FetchContent_Declare(
         glfw
         GIT_REPOSITORY https://github.com/glfw/glfw.git
@@ -56,7 +58,11 @@ FetchContent_Declare(
         GIT_SHALLOW TRUE
 )
 
-FetchContent_MakeAvailable(spdlog glfw glad glm imgui)
+FetchContent_Declare(json
+        URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
+)
+
+FetchContent_MakeAvailable(spdlog glfw glad glm imgui json)
 execute_process(COMMAND ${ACTIVE_VENV} -m pip install -r ${glad_SOURCE_DIR}/requirements.txt)
 glad_add_library(glad_gl_41 STATIC API gl:core=4.1)
 
@@ -69,7 +75,7 @@ target_link_libraries(imgui PUBLIC glfw)
 
 file(GLOB_RECURSE SOURCE CONFIGURE_DEPENDS src/*.cpp)
 add_executable(AI_Escape ${SOURCE})
-target_link_libraries(AI_Escape PRIVATE spdlog glad_gl_41 glm imgui glfw)
+target_link_libraries(AI_Escape PRIVATE spdlog glad_gl_41 glm imgui glfw nlohmann_json::nlohmann_json)
 target_include_directories(AI_Escape PRIVATE include)
 target_compile_definitions(AI_Escape PRIVATE GLFW_INCLUDE_NONE)
 

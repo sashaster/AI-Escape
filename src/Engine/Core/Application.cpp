@@ -14,7 +14,7 @@ namespace Engine {
     Application::Application(){
         INFO("Starting engine...");
         s_Instance = this;
-        m_Window = std::make_unique<Window>("AI-Escape", WindowWidth, WindowHeight);
+        m_Window = std::make_unique<Window>("AI-Escape", kWindowWidth, kWindowHeight);
         m_Window->SetEventCallback([this](Event& e) { OnEvent(e); });
         auto imgui = std::make_unique<ImGuiLayer>();
         m_ImGuiLayer = imgui.get();

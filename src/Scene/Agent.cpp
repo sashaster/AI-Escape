@@ -8,7 +8,6 @@ namespace Scene {
 
     glm::vec2 Agent::ReadInput(const float dt) {
         glm::vec2 dir{0.0f, 0.0f};
-
         if (Engine::Input::IsKeyPressed(GLFW_KEY_W)) {
             dir.y += 1.0f;
         }
@@ -34,7 +33,7 @@ namespace Scene {
         const auto half = m_Size * 0.5f;
         m_Position.x += moveDelta.x;
         for (const auto& wall: walls) {
-            if (Overlaps(GetBox(), wall)) {
+            if (Overlaps(Box(), wall)) {
                 if (moveDelta.x > 0.0f) {
                     m_Position.x = wall.min.x - half;
                 }
@@ -46,7 +45,7 @@ namespace Scene {
 
         m_Position.y += moveDelta.y;
         for (const auto& wall: walls) {
-            if (Overlaps(GetBox(), wall)) {
+            if (Overlaps(Box(), wall)) {
                 if (moveDelta.y > 0.0f) {
                     m_Position.y = wall.min.y - half;
                 }
