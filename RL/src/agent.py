@@ -1,7 +1,6 @@
 import socket
 import logging
 import sys
-from enum import StrEnum
 import json
 from typing import Any
 

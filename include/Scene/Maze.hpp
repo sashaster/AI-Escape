@@ -64,6 +64,10 @@ namespace Scene {
             return m_CellSize;
         }
 
+        [[nodiscard]] glm::vec2 Size() const {
+            return {m_Width, m_Height};
+        }
+
         [[nodiscard]] float GetWallThickness() const {
             return m_WallThickness;
         }
