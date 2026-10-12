@@ -66,6 +66,12 @@ public:
         m_Rays = Engine::Physics::RayCast(m_Agent.Box(), m_Maze.GetWalls(), kAngles, m_SensorRange);
         Engine::json obs;
         obs["done"] = exitReached;
+        auto& state = obs["state"];
+        for (auto i = 0; const auto& ray: m_Rays) {
+            state.push_back(ray.distance/m_SensorRange);
+            s_Rays[directions[i].name] = ray;
+            i++;
+        }
         const auto exitPos = m_Maze.GetExit().Center();
         const auto toExit = exitPos - m_Agent.GetPosition();
         m_ExitDist = glm::length(toExit);
@@ -74,17 +80,9 @@ public:
         }else {
             m_ExitDir = glm::vec2{0.0f};
         }
-        obs["exit_dist"] = m_ExitDist/glm::length(m_Maze.Size());
-        obs["exit_dir"] = {
-                {"x", m_ExitDir.x},
-                {"y", m_ExitDir.y}
-            };
-
-        for (auto i = 0; const auto& ray: m_Rays) {
-            obs[directions[i].name] = ray.distance/m_SensorRange;
-            s_Rays[directions[i].name] = ray;
-            i++;
-        }
+        state.push_back(m_ExitDist/glm::length(m_Maze.Size()));
+        state.push_back(m_ExitDir.x);
+        state.push_back(m_ExitDir.y);
         if (message) {
             message->data = obs;
             Engine::Net::SendObservation(message.value());
@@ -125,7 +123,7 @@ private:
     float m_SensorRange = kMaxDistance;
     float m_ExitDist = 0.0f;
     bool m_Reset = false;
-    glm::vec2 m_ExitDir;
+    glm::vec2 m_ExitDir{0.0f};
     std::vector<Engine::Physics::Ray> m_Rays;
 };
 

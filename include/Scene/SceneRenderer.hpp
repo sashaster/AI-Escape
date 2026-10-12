@@ -19,7 +19,7 @@ namespace Scene {
         Engine::Sprite m_Agent;
         Engine::Sprite m_Sensor;
         bool m_Sensors = false;
-        glm::mat4 m_ViewProjection;
+        glm::mat4 m_ViewProjection{0.0f};
         std::uint32_t m_MazeSeed;
     };
 }

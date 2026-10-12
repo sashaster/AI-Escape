@@ -5,11 +5,12 @@
 #include <Scene/Maze.hpp>
 #include <Scene/Agent.hpp>
 
+#include <Engine/Core/Random.hpp>
+
 namespace Scene {
 
-    void MazeGrid::Generate(const std::uint32_t seed) {
+    void MazeGrid::Generate() {
         Reset();
-        std::mt19937 generator(seed);
         constexpr int startX = 0, startY = 0;
         std::stack<std::pair<int, int> > stack;
         (*this)[startX, startY].visited = true;
@@ -38,8 +39,7 @@ namespace Scene {
                 continue;
             }
 
-            std::uniform_int_distribution<std::size_t> dist(0, neighbors.size() - 1);
-            auto [nx, ny] = neighbors.at(dist(generator));
+            auto [nx, ny] = neighbors.at(Engine::Random::Uint(0, neighbors.size() - 1));
             RemoveWallBetween(x, y, nx, ny);
             (*this)[nx, ny].visited = true;
             stack.emplace(nx, ny);
@@ -119,8 +119,9 @@ namespace Scene {
     }
 
     void Maze::Generate(const std::uint32_t seed) {
+        Engine::Random::Seed(seed);
         m_Seed = seed;
-        m_Grid.Generate(seed);
+        m_Grid.Generate();
         m_Grid[m_ExitCell.x, m_ExitCell.y].wallN = false;
         m_Walls.clear();
         BuildColliders();

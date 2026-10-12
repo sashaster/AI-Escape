@@ -1,6 +1,5 @@
 #include <Scene/SceneRenderer.hpp>
 #include <Engine/Core/Physics.hpp>
-
 #include <Scene/Agent.hpp>
 
 

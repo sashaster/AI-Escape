@@ -37,7 +37,7 @@ namespace Scene {
             return m_Height;
         }
 
-        void Generate(std::uint32_t seed);
+        void Generate();
 
     private:
         void RemoveWallBetween(int x, int y, int nx, int ny);
