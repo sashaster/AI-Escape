@@ -6,7 +6,7 @@
 
 namespace Engine {
     VertexBuffer::VertexBuffer(const std::span<const Vertex> vertices): m_Count(vertices.size()) {
-        ASSERT(!vertices.empty(), "Vertex buffer cannot be empty")
+        VERIFY(!vertices.empty(), "Vertex buffer cannot be empty")
         glGenBuffers(1, &m_ID);
         glBindBuffer(GL_ARRAY_BUFFER, m_ID);
         glBufferData(GL_ARRAY_BUFFER, vertices.size_bytes(), vertices.data(), GL_STATIC_DRAW);
@@ -14,7 +14,7 @@ namespace Engine {
     }
 
     VertexBuffer::VertexBuffer(const std::uint32_t count): m_Count(count) {
-        ASSERT(m_Count > 0, "VertexBuffer capacity must be greater than 0")
+        VERIFY(m_Count > 0, "VertexBuffer capacity must be greater than 0")
         glGenBuffers(1, &m_ID);
         glBindBuffer(GL_ARRAY_BUFFER, m_ID);
         glBufferData(GL_ARRAY_BUFFER, m_Count * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
@@ -30,7 +30,7 @@ namespace Engine {
     }
 
     void VertexBuffer::SetData(const std::span<const Vertex> vertices) {
-        ASSERT(vertices.size() <= m_Count, "VertexBuffer overflow")
+        VERIFY(vertices.size() <= m_Count, "VertexBuffer overflow")
         glBindBuffer(GL_ARRAY_BUFFER, m_ID);
         glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size_bytes(), vertices.data());
     }
@@ -48,7 +48,7 @@ namespace Engine {
     }
 
     IndexBuffer::IndexBuffer(const std::span<const std::uint32_t> indices): m_Count(indices.size()) {
-        ASSERT(!indices.empty(), "Index buffer cannot be empty")
+        VERIFY(!indices.empty(), "Index buffer cannot be empty")
         glGenBuffers(1, &m_ID);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ID);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size_bytes(), indices.data(), GL_STATIC_DRAW);
@@ -84,7 +84,7 @@ namespace Engine {
             case AttributeType::None:
                 break;
         }
-        ASSERT(false, "Unknown attribute type");
+        VERIFY(false, "Unknown attribute type");
         return 0;
     }
 
@@ -98,7 +98,7 @@ namespace Engine {
             case AttributeType::None:
                 break;
         }
-        ASSERT(false, "Unknown attribute type");
+        VERIFY(false, "Unknown attribute type");
         return 0;
     }
 
@@ -115,7 +115,7 @@ namespace Engine {
             case AttributeType::None:
                 break;
         }
-        ASSERT(false, "Unknown element type");
+        VERIFY(false, "Unknown element type");
         return 0;
     }
 

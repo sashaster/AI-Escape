@@ -15,7 +15,7 @@ namespace Scene {
     class MazeGrid {
     public:
         MazeGrid(const std::uint32_t width, const std::uint32_t height) : m_Width(width), m_Height(height), m_Cells(m_Width * m_Height) {
-            ASSERT(m_Width > 0 && m_Height > 0, "Invalid grid dimensions");
+            VERIFY(m_Width > 0 && m_Height > 0, "Invalid grid dimensions");
         }
 
         const MazeCell &operator[](const std::uint32_t x, const std::uint32_t y) const {

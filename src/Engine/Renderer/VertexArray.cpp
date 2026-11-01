@@ -11,7 +11,7 @@ namespace Engine {
     }
 
     void VertexArray::SetIndexBuffer(const std::shared_ptr<IndexBuffer>& indexBuffer) {
-        ASSERT(indexBuffer, "Index buffer is null");
+        VERIFY(indexBuffer, "Index buffer is null");
         glBindVertexArray(m_ID);
         indexBuffer->Bind();
         m_IndexBuffer = indexBuffer;

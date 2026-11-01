@@ -1,7 +1,6 @@
 #pragma once
 #include <csignal>
 #include <glad/gl.h>
-#include <cstdint>
 
 #include <Engine/Core/Log.hpp>
 
@@ -54,7 +53,7 @@ namespace Engine {
 #endif
 
 #ifndef NDEBUG
-    #define ASSERT(condition, ...) { if (!(condition)) { FATAL(__VA_ARGS__); BREAKPOINT(); } }
+    #define VERIFY(condition, ...) { if (!(condition)) { FATAL(__VA_ARGS__); BREAKPOINT(); } }
 #else
-    #define ASSERT(condition, ...)
+    #define VERIFY(condition, ...) {if (!(condition)) { FATAL(__VA_ARGS__); throw std::runtime_error("Fatal error.Check logs!");}}
 #endif

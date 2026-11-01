@@ -15,7 +15,7 @@ namespace Engine {
             return GL_VERTEX_SHADER;
         if (type == "fragment")
             return GL_FRAGMENT_SHADER;
-        ASSERT(false, "Unknown shader type {}", type);
+        VERIFY(false, "Unknown shader type {}", type);
         return GL_NONE;
     }
 
@@ -39,7 +39,7 @@ namespace Engine {
         std::unordered_map<GLenum, std::string> shaders;
         std::ifstream file(path);
         if (!file) {
-            ASSERT(false, "Could not open file {}", path.string());
+            VERIFY(false, "Could not open file {}", path.string());
         }
         std::stringstream ss;
         ss << file.rdbuf();
@@ -54,7 +54,7 @@ namespace Engine {
             pos = source.find(token, newLine);
             shaders[GLtype(type)] = source.substr(newLine, pos - newLine);
         }
-        ASSERT(shaders.size() == 2, "Failed to parse shader {}", path.string())
+        VERIFY(shaders.size() == 2, "Failed to parse shader {}", path.string())
         return shaders;
     }
 
@@ -71,7 +71,7 @@ namespace Engine {
             default:
                 break;
         }
-        ASSERT(false, "Unknown shader type {}", type);
+        VERIFY(false, "Unknown shader type {}", type);
         return "";
     }
 

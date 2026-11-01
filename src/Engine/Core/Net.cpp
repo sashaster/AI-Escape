@@ -21,9 +21,8 @@ namespace Engine {
         s_ServerAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
         s_Socket = socket(AF_INET, SOCK_DGRAM, 0);
-        ASSERT(s_Socket >= 0, "Failed to create a socket: {}", std::strerror(errno))
-
-        ASSERT(bind(s_Socket, reinterpret_cast<sockaddr*>(&s_ServerAddr), sizeof(s_ServerAddr)) >= 0,
+        VERIFY(s_Socket >= 0, "Failed to create a socket: {}", std::strerror(errno))
+        VERIFY(bind(s_Socket, reinterpret_cast<sockaddr*>(&s_ServerAddr), sizeof(s_ServerAddr)) >= 0,
                "Failed to assign address to a socket: {}", std::strerror(errno))
         INFO("Server started");
     }

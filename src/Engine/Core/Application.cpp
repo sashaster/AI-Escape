@@ -1,5 +1,4 @@
 #include <GLFW/glfw3.h>
-#include <array>
 
 #include <Engine/Core/Application.hpp>
 #include <Engine/Core/Window.hpp>
@@ -29,7 +28,7 @@ namespace Engine {
         glfwSetErrorCallback([](int error, const char* description) {
             ERROR("GLFW error ({0}): {1}", error, description);
         });
-        ASSERT(glfwInit(), "Failed to initialize GLFW");
+        VERIFY(glfwInit(), "Failed to initialize GLFW");
     }
 
     void Application::Run() {

@@ -26,7 +26,7 @@ namespace Engine {
         m_Handle.reset(glfwCreateWindow(m_Data.width, m_Data.height, m_Data.title.c_str(), nullptr, nullptr));
         glfwMakeContextCurrent(m_Handle.get());
         DEBUG("Loading OpenGL...");
-        ASSERT(gladLoadGL(glfwGetProcAddress), "Failed to load OpenGL");
+        VERIFY(gladLoadGL(glfwGetProcAddress), "Failed to load OpenGL");
         DEBUG("OpenGL initialized");
         INFO("OpenGL: {0} {1} {2}",
             reinterpret_cast<const char*>(glGetString(GL_VENDOR)),
@@ -37,14 +37,14 @@ namespace Engine {
 
         glfwSetWindowCloseCallback(m_Handle.get(), [](GLFWwindow* window) {
             const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-            ASSERT(data, "Window data is null");
+            VERIFY(data, "Window data is null");
             WindowCloseEvent event;
             data->eventCallback(event);
         });
 
         glfwSetFramebufferSizeCallback(m_Handle.get(), [](GLFWwindow* window, const int width, const int height) {
             const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-            ASSERT(data, "Window data is null");
+            VERIFY(data, "Window data is null");
 
             data->framebufferWidth = width;
             data->framebufferHeight = height;
@@ -54,7 +54,7 @@ namespace Engine {
 
         glfwSetWindowSizeCallback(m_Handle.get(), [](GLFWwindow* window, const int width, const int height) {
             const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-            ASSERT(data, "Window data is null");
+            VERIFY(data, "Window data is null");
 
             data->width= width;
             data->height = height;
@@ -64,7 +64,7 @@ namespace Engine {
 
         glfwSetMouseButtonCallback(m_Handle.get(), [](GLFWwindow* window, const int button, const int action, const int mods) {
             const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-            ASSERT(data, "Window data is null");
+            VERIFY(data, "Window data is null");
             switch (action) {
                 case GLFW_PRESS: {
                     MouseButtonPressedEvent event(button);
@@ -81,21 +81,21 @@ namespace Engine {
 
         glfwSetScrollCallback(m_Handle.get(), [](GLFWwindow* window, const double xoffset, const double yoffset) {
             const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-            ASSERT(data, "Window data is null");
+            VERIFY(data, "Window data is null");
             MouseScrolledEvent event(static_cast<float>(xoffset), static_cast<float>(yoffset));
             data->eventCallback(event);
         });
 
         glfwSetCursorPosCallback(m_Handle.get(), [](GLFWwindow* window, const double xpos, const double ypos) {
             const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-            ASSERT(data, "Window data is null");
+            VERIFY(data, "Window data is null");
             MouseMovedEvent event(static_cast<float>(xpos), static_cast<float>(ypos));
             data->eventCallback(event);
         });
 
         glfwSetKeyCallback(m_Handle.get(), [](GLFWwindow* window, const int key, const int scancode, const int action, const int mods) {
             const auto data = static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-            ASSERT(data, "Window data is null");
+            VERIFY(data, "Window data is null");
             switch (action) {
                 case GLFW_PRESS: {
                     KeyPressedEvent event(key);
