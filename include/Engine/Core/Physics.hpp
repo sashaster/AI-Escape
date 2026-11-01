@@ -1,6 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
-#include <vector>
+#include <array>
 #include <span>
 
 
@@ -27,7 +27,7 @@ namespace Engine::Physics{
         glm::vec2 end;
     };
 
-    std::vector<Ray> RayCast(AABB box, std::span<const AABB> walls, std::span<const float> angles, float maxDist);
+    std::array<Ray, 8> RayCast(AABB box, std::span<const AABB> walls, float maxDist);
 
     bool Overlaps(AABB box, std::span<const AABB> walls);
     bool Overlaps(AABB box, AABB wall);

@@ -1,15 +1,27 @@
 import socket
 import logging
-import sys
 import json
-from typing import Any
+from typing import Any, Generator
+import torch
+from tqdm import tqdm
+from ppo import PPO
+import sys
+from pathlib import Path
 
 
 PORT = 8080
 HOST = "127.0.0.1"
 PACKET_SIZE = 65535
-
-logger = logging.getLogger("agent")
+DEVICE = torch.accelerator.current_accelerator() if torch.accelerator.is_available() else torch.device("cpu")
+ACTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+LOG = logging.getLogger("agent")
+STEP_PENALTY = 0.01
+WALL_PENALTY = 0.01
+EXIT_REWARD = 10.0
+NO_ACTION = (0, 0)
+MAX_STEPS = 2000
+MAX_EPISODES = 100
+NEW_CELL_REWARD = 1
 
 
 class UDPClient:
@@ -18,30 +30,30 @@ class UDPClient:
         self._host = host
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._running = True
-        logger.info("Client connection opened")
+        LOG.info("Client socket opened")
 
     def receive_observations(self) -> dict[str, Any]|None:
         try:
             data, addr = self._socket.recvfrom(PACKET_SIZE)
             return json.loads(data.decode())
         except (OSError, ValueError) as e:
-            logger.error(f"Error receiving observations: {e}")
+            LOG.error(f"Error receiving observations: {e}")
             return None
 
-    def send_action(self) -> None:
+    def send_action(self, action: tuple[int, int], reset: bool=False) -> None:
         try:
-            self._socket.sendto(json.dumps({'action': 1}).encode(), (self._host, self._port))
+            self._socket.sendto(json.dumps({'action': action, 'reset': reset}).encode(), (self._host, self._port))
         except OSError as e:
-            logger.error(f"Error sending action: {e}")
+            LOG.error(f"Error sending action: {e}")
             return
 
     def shutdown(self) -> None:
         try:
             self._socket.close()
         except OSError as e:
-            logger.error(f"Error closing socket: {e}")
+            LOG.error(f"Error closing socket: {e}")
             return
-        logger.info("Client connection closed")
+        LOG.info("Client socket closed")
 
     @property
     def running(self) -> bool:
@@ -58,20 +70,91 @@ class UDPClient:
         self.shutdown()
         return False
 
+def compute_reward(sensors: list[float], cell: tuple[int, int], visited: set[tuple[int, int]], done: bool) -> tuple[float, dict[str, float]]:
+    stats = {'wall_penalty': 0.0, 'new_cell_reward': 0.0, 'step_penalty': 0.0, 'exit_reward': 0.0}
+    if done:
+        stats['exit_reward'] = EXIT_REWARD
+        return EXIT_REWARD, stats
+
+    reward = -STEP_PENALTY
+    stats['step_penalty'] = reward
+
+    if min(sensors) == 0.0:
+        reward -= WALL_PENALTY
+        stats['wall_penalty'] = -WALL_PENALTY
+
+    if cell not in visited:
+        reward += NEW_CELL_REWARD
+        stats['new_cell_reward'] = NEW_CELL_REWARD
+        visited.add(cell)
+
+    return reward, stats
+
+def episode(client: UDPClient) -> Generator[dict[str, Any], None, None]:
+    while client.running:
+        obs = client.receive_observations()
+        if obs is None:
+            client.running = False
+            return None
+        if "state" not in obs or "done" not in obs or "cell" not in obs:
+            LOG.warning("Invalid observation")
+            continue
+
+        yield obs
+
+    return None
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
                         stream=sys.stdout,
                         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
                         datefmt="%Y-%m-%d %H:%M:%S")
+    LOG.info(f"Device: {DEVICE}")
+    agent = PPO(12, 4, device=DEVICE)
     with UDPClient(PORT, HOST) as client:
+        client.send_action(NO_ACTION)
+        ep = 0
         while client.running:
+            step = 0
+            prev_state: list[float] | None = None
+            truncated = False
+            stats = {'wall_penalty': 0.0, 'new_cell_reward': 0.0, 'step_penalty': 0.0, 'exit_reward': 0.0}
+            visited = {(0, 0)}
             try:
-                client.send_action()
-                observations = client.receive_observations()
-                if observations is None:
-                    break
-                logger.debug(observations)
+                with tqdm(episode(client), f"Episode {ep + 1}", unit="step", total=MAX_STEPS, leave=False, file=sys.stdout) as pbar:
+
+                    for obs in pbar:
+
+                        full_state = obs['state']
+                        sensors = full_state['sensors']
+                        neighbors = full_state['neighbors']
+                        x, y = obs['cell']
+                        cell = (int(x), int(y))
+                        state = sensors + neighbors
+
+                        done = obs['done']
+
+                        if prev_state is not None:
+                            reward, details = compute_reward(sensors, cell, visited, done)
+                            for k,v in details.items():
+                                stats[k] += v
+                            truncated = not done and step == MAX_STEPS
+                            agent.record(reward, done, truncated, state)
+                            pbar.set_postfix(ep_reward=sum(stats.values()))
+
+                        if done or truncated:
+                            client.send_action(NO_ACTION, True)
+                            tqdm.write(f"Episode: {ep + 1} {'done' if done else 'truncated'}, wall_penalty={stats['wall_penalty']:.2f}, step_penalty={stats['step_penalty']:.2f}, new_cell_reward={stats['new_cell_reward']:.2f}, exit_reward={stats['exit_reward']:.2f}  ep_reward={sum(stats.values()):.2f}")
+                            break
+
+                        action = agent.act(state)
+                        prev_state = state
+                        client.send_action(ACTIONS[action])
+                        step += 1
+                    ep += 1
+                    if ep == MAX_EPISODES:
+                        agent.save(Path("model.pth"))
+                        client.running = False
             except KeyboardInterrupt:
                 client.running = False
-

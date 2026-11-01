@@ -4,7 +4,6 @@
 
 
 namespace Engine {
-
     class OrthographicCameraController {
     public:
         explicit OrthographicCameraController(float aspect, float zoomLevel = 1.0f, float speed = 1.0);

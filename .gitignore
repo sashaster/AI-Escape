@@ -1,2 +1,6 @@
 .idea/
 .DS_Store
+.cache/
+__pycache__/
+imgui.ini
+.vscode/

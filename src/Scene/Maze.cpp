@@ -1,7 +1,6 @@
 #include <stack>
 #include <utility>
 
-
 #include <Scene/Maze.hpp>
 #include <Scene/Agent.hpp>
 
@@ -17,29 +16,32 @@ namespace Scene {
         stack.emplace(startX, startY);
         while (!stack.empty()) {
             auto [x, y] = stack.top();
-            std::vector<std::pair<int, int> > neighbors;
+            std::array<std::pair<int, int>, 4 > neighbors;
+            auto i = 0;
             if (y < m_Height - 1 && !(*this)[x, y + 1].visited) {
                 //N
-                neighbors.emplace_back(x, y + 1);
+                neighbors[i++] = {x, y + 1};
             }
             if (y > 0 && !(*this)[x, y - 1].visited) {
                 //S
-                neighbors.emplace_back(x, y - 1);
+                neighbors[i++] = {x, y - 1};
             }
             if (x > 0 && !(*this)[x - 1, y].visited) {
                 //W
-                neighbors.emplace_back(x - 1, y);
+                neighbors[i++] = {x - 1, y};
             }
             if (x < m_Width - 1 && !(*this)[x + 1, y].visited) {
                 //E
-                neighbors.emplace_back(x + 1, y);
+                neighbors[i++] = {x + 1, y};
             }
-            if (neighbors.empty()) {
+            if (i == 0) {
                 stack.pop();
                 continue;
             }
 
-            auto [nx, ny] = neighbors.at(Engine::Random::Uint(0, neighbors.size() - 1));
+            const auto max = i - 1;
+
+            auto [nx, ny] = neighbors.at(Engine::Random::Uint(0, max));
             RemoveWallBetween(x, y, nx, ny);
             (*this)[nx, ny].visited = true;
             stack.emplace(nx, ny);
@@ -56,7 +58,7 @@ namespace Scene {
         }
     }
 
-    void MazeGrid::RemoveWallBetween(const int x, const int y, const int nx, const int ny) {
+    void MazeGrid::RemoveWallBetween(const std::uint32_t x, const std::uint32_t y, const std::uint32_t nx, const std::uint32_t ny) {
         if (nx == x + 1) {
             //E
             (*this)[x, y].wallE = false;
@@ -84,11 +86,11 @@ namespace Scene {
         for (auto y = 0; y < m_Grid.GetHeight(); ++y) {
             for (auto x = 0; x < m_Grid.GetWidth(); ++x) {
                 const auto &cell = m_Grid[x, y];
-                const auto cellPos = GridToWorld(x, y);
+                const auto cellPos = Cell({x, y});
                 if (cell.wallN) {
                     m_Walls.emplace_back(Box(cellPos.x + m_CellSize * 0.5f,  cellPos.y + m_CellSize,  m_CellSize * 0.5f, m_WallThickness * 0.5f));
                 }
-                if (m_ExitCell.x == x && m_ExitCell.y == y) {
+                if (m_LastCell.x == x && m_LastCell.y == y) {
                     const float topY = cellPos.y + m_CellSize;
                     m_Exit = {.min = {cellPos.x, topY}, .max = {cellPos.x + m_CellSize, topY + m_CellSize}};
                 }
@@ -105,8 +107,7 @@ namespace Scene {
         }
     }
 
-    Maze::Maze(const int gridWidth, const int gridHeight, const float cellSize, const float wallThickness, const glm::ivec2 exitCell, const std::uint32_t seed): m_Exit(glm::vec2(0.0f), glm::vec2(1.0f)),
-                m_ExitCell(exitCell),
+    Maze::Maze(const std::uint32_t gridWidth, const std::uint32_t gridHeight, const float cellSize, const float wallThickness, const std::uint32_t seed):
                 m_Grid(gridWidth, gridHeight),
                 m_Width(static_cast<float>(m_Grid.GetWidth()) * cellSize),
                 m_Height(static_cast<float>(m_Grid.GetHeight()) * cellSize),
@@ -114,15 +115,16 @@ namespace Scene {
                 m_WallThickness(wallThickness),
                 m_Seed(seed)
     {
-        ASSERT((m_ExitCell.x >= 0) && (m_ExitCell.x < m_Grid.GetWidth()) && (m_ExitCell.y == m_Grid.GetHeight() - 1), "Invalid exit cell")
-        Generate(seed);
+        m_LastCell.x = m_Grid.GetWidth() - 1;
+        m_LastCell.y = m_Grid.GetHeight() - 1;
+        Generate(m_Seed);
     }
 
     void Maze::Generate(const std::uint32_t seed) {
         Engine::Random::Seed(seed);
         m_Seed = seed;
         m_Grid.Generate();
-        m_Grid[m_ExitCell.x, m_ExitCell.y].wallN = false;
+        m_Grid[m_LastCell.x, m_LastCell.y].wallN = false;
         m_Walls.clear();
         BuildColliders();
     }

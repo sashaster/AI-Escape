@@ -21,18 +21,18 @@ namespace Scene {
         const auto cs = maze.GetCellSize();
         const auto wt = maze.GetWallThickness();
         const auto& grid = maze.GetGrid();
-        const auto exit = maze.GetExitCell();
+        const auto lastCell = maze.GetLastCell();
         const auto origin = maze.Origin();
         AddWall(origin.x + maze.GetWidth() * 0.5f, origin.y + maze.GetHeight() * 0.5f, maze.GetWidth() * 0.5f, maze.GetHeight() * 0.5f, floorColor);
         for (auto y = 0; y < grid.GetHeight(); ++y) {
             for (auto x = 0; x < grid.GetWidth(); ++x) {
                 const auto &cell = grid[x, y];
-                const auto cellPos = maze.GridToWorld(x, y);
+                const auto cellPos = maze.Cell({x, y});
                 if (cell.wallN) {
                     AddWall(cellPos.x + cs * 0.5f,  cellPos.y + cs,  cs * 0.5f, wt * 0.5f, wallColor);
                 }
 
-                if (exit.x == x && exit.y == y) {
+                if (lastCell.x == x && lastCell.y == y) {
                     const float topY = cellPos.y + cs;
                     const float ecy = topY + cs * 0.5f;
                     AddWall(cellPos.x + cs * 0.5f, ecy, cs * 0.5f, cs * 0.5f, exitColor);
@@ -100,7 +100,7 @@ namespace Scene {
         m_Sensor.shader = shader;
     }
 
-    void SceneRenderer::Draw() {
+    void SceneRenderer::Draw() const {
         Engine::Renderer::Clear();
         Engine::Renderer::Draw(m_Maze, m_ViewProjection);
         Engine::Renderer::Draw(m_Agent, m_ViewProjection);
@@ -115,6 +115,7 @@ namespace Scene {
             s_MazeData.indices.clear();
             BuildMaze(maze);
             m_Maze.VA->GetBuffers().front()->SetData(s_MazeData.vertices);
+            m_MazeSeed = maze.GetSeed();
         }
         m_Agent.transform = agent.Transform();
         m_ViewProjection = camera.GetViewProjection();

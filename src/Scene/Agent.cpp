@@ -1,35 +1,17 @@
 #include <Scene/Agent.hpp>
-#include <Engine/Core/Input.hpp>
 
 
 namespace Scene {
     using namespace Engine::Physics;
     static constexpr float kAgentSpeed = 20.0f;
 
-    glm::vec2 Agent::ReadInput(const float dt) {
-        glm::vec2 dir{0.0f, 0.0f};
-        if (Engine::Input::IsKeyPressed(GLFW_KEY_W)) {
-            dir.y += 1.0f;
-        }
-        if (Engine::Input::IsKeyPressed(GLFW_KEY_S)) {
-            dir.y -= 1.0f;
-        }
-        if (Engine::Input::IsKeyPressed(GLFW_KEY_D)) {
-            dir.x += 1.0f;
-        }
-        if (Engine::Input::IsKeyPressed(GLFW_KEY_A)) {
-            dir.x -= 1.0f;
-        }
-
+    //TODO: check collisions only for walls near the agent
+    void Agent::OnUpdate(const float dt, const std::span<const AABB> walls, glm::vec2 dir) {
         if (glm::dot(dir, dir) > 0) {
             dir = glm::normalize(dir);
         }
 
-        return dir * kAgentSpeed * dt;
-    }
-
-    void Agent::OnUpdate(const float dt, const std::span<const AABB> walls) {
-        const auto moveDelta = ReadInput(dt);
+        const auto moveDelta = dir * kAgentSpeed  * dt;
         const auto half = m_Size * 0.5f;
         m_Position.x += moveDelta.x;
         for (const auto& wall: walls) {

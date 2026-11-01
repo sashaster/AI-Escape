@@ -1,6 +1,7 @@
 #pragma once
 #include <Engine/Renderer/Renderer.hpp>
 #include <Scene/Maze.hpp>
+#include <Scene/Agent.hpp>
 
 
 namespace Scene {
@@ -8,7 +9,7 @@ namespace Scene {
     class SceneRenderer {
     public:
         explicit SceneRenderer(const Maze& maze);
-        void Draw();
+        void Draw() const;
         void Submit(const Agent& agent, const Maze& maze, const Engine::OrthographicCamera& camera, std::span<const Engine::Physics::Ray> rays, bool sensors);
 
     private:
