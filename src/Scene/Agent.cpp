@@ -11,7 +11,7 @@ namespace Scene {
             dir = glm::normalize(dir);
         }
 
-        const auto moveDelta = dir * kAgentSpeed  * dt;
+        const auto moveDelta = dir * kAgentSpeed * dt;
         const auto half = m_Size * 0.5f;
         m_Position.x += moveDelta.x;
         for (const auto& wall: walls) {
