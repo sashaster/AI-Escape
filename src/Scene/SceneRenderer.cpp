@@ -11,8 +11,9 @@ namespace Scene {
     } s_MazeData;
 
     constexpr glm::vec4 kAgentColor = {1.0f, 1.0f, 0.0f, 1.0f};
-    static std::array<Engine::Vertex, 16> s_SensorVertices;
+    static std::array<Engine::Vertex, 32> s_SensorVertices;
     constexpr glm::vec4 kSensorColor = {1.0f, 1.0f, 1.0f, 1.0f};
+    constexpr glm::vec4 kSensorHitColor = {1.0f, 0.5f, 0.0f, 1.0f};
 
     void SceneRenderer::BuildMaze(const Maze& maze) {
         constexpr auto wallColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
@@ -109,7 +110,7 @@ namespace Scene {
         }
     }
 
-    void SceneRenderer::Submit(const Agent& agent, const Maze& maze, const Engine::OrthographicCamera& camera, const std::span<const Engine::Physics::Ray> rays, const bool sensors) {
+    void SceneRenderer::Submit(const Agent& agent, const Maze& maze, const Engine::OrthographicCamera& camera, const std::span<const Engine::Physics::Sweep> sweeps, const bool sensors) {
         if (m_MazeSeed != maze.GetSeed()) {
             s_MazeData.vertices.clear();
             s_MazeData.indices.clear();
@@ -121,9 +122,16 @@ namespace Scene {
         m_ViewProjection = camera.GetViewProjection();
         m_Sensors = sensors;
         if (m_Sensors) {
-            for (auto i = 0; const auto& ray: rays) {
-                s_SensorVertices[i++] = {.position = {ray.start.x, ray.start.y, 0.0f}, .color = kSensorColor};
-                s_SensorVertices[i++] = {.position = {ray.end.x, ray.end.y, 0.0f}, .color = kSensorColor};
+            for (auto i = 0; const auto& sweep: sweeps) {
+                const auto color = sweep.hit ? kSensorHitColor : kSensorColor;
+                const auto [min, max] = sweep.box;
+                const std::array<glm::vec3, 4> corners = {{
+                    {min.x, min.y, 0.0f}, {min.x, max.y, 0.0f}, {max.x, max.y, 0.0f}, {max.x, min.y, 0.0f}
+                }};
+                for (std::size_t c = 0; c < corners.size(); ++c) {
+                    s_SensorVertices[i++] = {.position = corners[c], .color = color};
+                    s_SensorVertices[i++] = {.position = corners[(c + 1) % corners.size()], .color = color};
+                }
             }
             m_Sensor.VA->GetBuffers()
                          .front()->SetData(s_SensorVertices);

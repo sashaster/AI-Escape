@@ -10,7 +10,7 @@ namespace Scene {
     public:
         explicit SceneRenderer(const Maze& maze);
         void Draw() const;
-        void Submit(const Agent& agent, const Maze& maze, const Engine::OrthographicCamera& camera, std::span<const Engine::Physics::Ray> rays, bool sensors);
+        void Submit(const Agent& agent, const Maze& maze, const Engine::OrthographicCamera& camera, std::span<const Engine::Physics::Sweep> sweeps, bool sensors);
 
     private:
         void Init();

@@ -58,8 +58,8 @@ class PPO:
     def __init__(self, n_obs: int,
                  n_actions: int,
                  n_steps: int=1024,
-                 pl_lr: float=0.001,
-                 vf_lr: float=0.01,
+                 pl_lr: float=0.0001,
+                 vf_lr: float=0.001,
                  gamma: float=0.99,
                  lam: float=0.95,
                  clip_ratio: float=0.2,
@@ -118,7 +118,8 @@ class PPO:
 
         with torch.no_grad():
             dist = self.__policy(curr_state)
-            action = dist.sample() if self.__training else dist.probs.argmax(-1)
+            # action = dist.sample() if self.__training else dist.probs.argmax(-1)
+            action = dist.sample()
 
         if self.__training:
             self.__states.append(curr_state)
@@ -208,11 +209,9 @@ class PPO:
                     kl = distributions.kl_divergence(old_dist, dist).mean().item()
                 kls.append(kl)    
 
-
                 policy_losses.append(policy_loss.item())
                 value_losses.append(value_loss.item())
                 entropies.append(entropy.item())
-                
 
                 loss = policy_loss + value_loss - self.__ent_coef * entropy
                 self.__optim.zero_grad()

@@ -3,38 +3,42 @@
 
 namespace Scene {
     using namespace Engine::Physics;
-    static constexpr float kAgentSpeed = 20.0f;
+    static constexpr float kAgentSpeed = 100.0f;
 
     //TODO: check collisions only for walls near the agent
-    void Agent::OnUpdate(const float dt, const std::span<const AABB> walls, glm::vec2 dir) {
-        if (glm::dot(dir, dir) > 0) {
-            dir = glm::normalize(dir);
+    bool Agent::OnUpdate(const float dt, const std::span<const AABB> walls, glm::vec2 dir) {
+        if (glm::dot(dir, dir) == 0) {
+            return false;
         }
 
+        dir = glm::normalize(dir);
         const auto moveDelta = dir * kAgentSpeed * dt;
-        const auto half = m_Size * 0.5f;
-        m_Position.x += moveDelta.x;
-        for (const auto& wall: walls) {
-            if (Overlaps(Box(), wall)) {
-                if (moveDelta.x > 0.0f) {
-                    m_Position.x = wall.min.x - half;
-                }
-                else if (moveDelta.x < 0.0f) {
-                    m_Position.x = wall.max.x + half;
-                }
-            }
-        }
+        const auto hitX = Move(0, moveDelta.x, walls);
+        const auto hitY = Move(1, moveDelta.y, walls);
 
-        m_Position.y += moveDelta.y;
+        return hitX || hitY;
+    }
+
+    bool Agent::Move(const int axis, const float moveDelta, const std::span<const AABB> walls) {
+        if (moveDelta == 0.0f) {
+            return false;
+        }
+        m_Position[axis] += moveDelta;
+        const auto half = m_Size * 0.5f;
+        auto hit = false;
+
         for (const auto& wall: walls) {
             if (Overlaps(Box(), wall)) {
-                if (moveDelta.y > 0.0f) {
-                    m_Position.y = wall.min.y - half;
+
+                if (moveDelta > 0.0f) {
+                    m_Position[axis] = wall.min[axis] - half;
                 }
-                else if (moveDelta.y < 0.0f) {
-                    m_Position.y = wall.max.y + half;
+                else {
+                    m_Position[axis] = wall.max[axis] + half;
                 }
+                hit = true;
             }
         }
+        return hit;
     }
 }

@@ -1,6 +1,7 @@
 import socket
 import logging
 import json
+import math
 from typing import Any, Generator
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -8,6 +9,7 @@ from tqdm import tqdm
 from ppo import PPO
 import sys
 from pathlib import Path
+from collections import deque
 
 
 PORT = 8080
@@ -17,13 +19,20 @@ DEVICE = torch.accelerator.current_accelerator() if torch.accelerator.is_availab
 LOG = logging.getLogger("agent")
 
 WALL_PENALTY = 0.05
-EXIT_REWARD = 10.0
+EXIT_REWARD = 50.0
 NEW_CELL_REWARD = 0.5
+PROGRESS_REWARD = 0.5
+STEP_PENALTY = 0.01
+
 
 NO_ACTION = (0, 0)
 ACTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)] #UP, RIGHT, DOWN, LEFT
 MAX_STEPS = 2000
-MAX_EPISODES = 100
+MAX_EPISODES = 1000
+EVAL_WINDOW = 20
+BEST_MODEL_PATH = Path("best_model.pth")
+LAST_MODEL_PATH = Path("model.pth")
+
 
 
 class UDPClient:
@@ -70,18 +79,28 @@ class UDPClient:
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.shutdown()
-        return False
+        return False        
 
-def compute_reward(sensors: list[float], cell: tuple[int, int], visited: set[tuple[int, int]], done: bool) -> tuple[float, dict[str, float]]:
-    stats = {'wall_penalty': 0.0, 'new_cell_reward': 0.0, 'exit_reward': 0.0}
+def compute_reward(pos: tuple[float, float], prev_pos: tuple[float, float], prev_cell: tuple[int, int], prev_hint: list[int], cell: tuple[int, int], visited: set[tuple[int, int]], steps_left: int, hit: bool, done: bool) -> tuple[float, dict[str, float]]:
+    stats = {'wall_penalty': 0.0, 'step_penalty': 0.0, 'new_cell_reward': 0.0, 'progress_reward': 0.0, 'exit_reward': 0.0}
     if done:
-        stats['exit_reward'] = EXIT_REWARD
-        return EXIT_REWARD, stats
+        r = EXIT_REWARD * (1 + steps_left/MAX_STEPS)
+        stats['exit_reward'] = r
+        return r, stats
 
-    reward = 0.0
-    if min(sensors) == 0.0:
+    reward = -STEP_PENALTY
+    stats['step_penalty'] -= STEP_PENALTY
+    if hit:
         reward -= WALL_PENALTY
         stats['wall_penalty'] -= WALL_PENALTY
+
+    if 1 in prev_hint and cell == prev_cell:
+        dx, dy = ACTIONS[prev_hint.index(1)]
+        target = (prev_cell[0] + dx, prev_cell[1] + dy)
+        progress = math.dist(prev_pos, target) - math.dist(pos, target)
+        progress_r = PROGRESS_REWARD * progress
+        stats['progress_reward'] = progress_r
+        reward += progress_r
 
     if cell not in visited:
         reward += NEW_CELL_REWARD
@@ -96,7 +115,7 @@ def episode(client: UDPClient) -> Generator[dict[str, Any], None, None]:
         if obs is None:
             client.running = False
             return None
-        if "state" not in obs or "done" not in obs or "cell" not in obs:
+        if "state" not in obs or "done" not in obs or "cell" not in obs or "hit" not in obs:
             LOG.warning("Invalid observation")
             continue
 
@@ -112,56 +131,103 @@ if __name__ == '__main__':
                         datefmt="%Y-%m-%d %H:%M:%S")
     LOG.info(f"Device: {DEVICE}")
     writer = SummaryWriter()
-    agent = PPO(12, 4, device=DEVICE, writer=writer)
+    if len(sys.argv) < 2 or sys.argv[1] not in ("train", "test"):
+        LOG.error("Run with flag: train or test")
+        sys.exit(1)
+
+    train = True if sys.argv[1] == "train" else False    
+    agent = PPO(16, len(ACTIONS), device=DEVICE, writer=writer, training=train)
+    if not train:
+        agent.load(BEST_MODEL_PATH)
     with UDPClient(PORT, HOST) as client:
         client.send_action(NO_ACTION)
         ep = 0
+        successes: list[int] = []
+        recent_rewards: deque[float] = deque(maxlen=EVAL_WINDOW)
+        best_avg_reward = float("-inf")
         while client.running:
             step = 0
-            prev_state: list[float] | None = None
+            reward: float|None = None
             truncated = False
-            stats = {'wall_penalty': 0.0, 'new_cell_reward': 0.0, 'exit_reward': 0.0}
+            stats = {'wall_penalty': 0.0, 'step_penalty': 0.0, 'new_cell_reward': 0.0, 'progress_reward': 0.0, 'exit_reward': 0.0}
             visited = {(0, 0)}
+            prev_action: int|None = None
+            prev_cell: tuple[int, int] = (0, 0)
+            prev_pos: tuple[float, float] = (0.0, 0.0)
+            prev_hint: list[int] = []
             try:
                 with tqdm(episode(client), f"Episode {ep + 1}", unit="step", total=MAX_STEPS, leave=False, file=sys.stdout, colour="green") as pbar:
 
                     for obs in pbar:
 
+                        actions = [0.0] * len(ACTIONS)
+
                         full_state = obs['state']
                         sensors = full_state['sensors']
-                        neighbors = full_state['neighbors']
+                        hint = full_state['hint']
+                        exit_vec = full_state['exit']
+                        offset = full_state['offset']
                         x, y = obs['cell']
                         cell = (int(x), int(y))
-                        state = sensors + neighbors
+                        pos = (cell[0] + offset[0], cell[1] + offset[1])
+
 
                         done = obs['done']
+                        hit = obs['hit']
+                        if prev_action is not None:
+                            actions[prev_action] = 1.0
+                        state = sensors + offset + hint + exit_vec + actions
 
-                        if prev_state is not None:
-                            reward, details = compute_reward(sensors, cell, visited, done)
+                        if prev_action is not None:
+                            steps_left = MAX_STEPS - step
+                            reward, details = compute_reward(pos, prev_pos, prev_cell, prev_hint, cell, visited, steps_left, hit, done)
                             for k,v in details.items():
                                 stats[k] += v
-                        
                             truncated = not done and step >= MAX_STEPS
                             agent.record(reward, done, truncated, state)
                             pbar.set_postfix(ep_reward=sum(stats.values()))
+                            
 
                         if done or truncated:
+                            successes.append(1 if done else 0)
                             client.send_action(NO_ACTION, True)
                             ep_reward = sum(stats.values())
                             summary = ", ".join(f"{k}={v:.2f}" for k, v in stats.items())
-                            tqdm.write(f"Episode: {ep + 1} {'done' if done else 'truncated'} {summary}, ep_reward={ep_reward:.2f}")
-                            writer.add_scalar("Rewards/train", ep_reward, ep, new_style=True)
-                            break
+                            tqdm.write(f"Episode: {ep + 1} {'done' if done else 'truncated'}, steps={step} {summary}, ep_reward={ep_reward:.2f}")
+                            writer.add_scalar("Episode/rewards", ep_reward, ep + 1, new_style=True)
+                            writer.add_scalar("Episode/visited_cells", len(visited) - 1, ep + 1, new_style=True)
+                            writer.add_scalar("Episode/length", step, ep + 1, new_style=True)
+                            for k, v in stats.items():
+                                writer.add_scalar(f"Reward/{k}", v, ep + 1, new_style=True)
+                            if (ep + 1) % EVAL_WINDOW == 0:
+                                block = successes[-EVAL_WINDOW:]
+                                writer.add_scalar("Exit/success_rate", sum(block)/len(block), ep + 1, new_style=True)
 
+                            if train:    
+                                recent_rewards.append(ep_reward)
+                                if len(recent_rewards) == EVAL_WINDOW:
+                                    avg_reward = sum(recent_rewards) / len(recent_rewards)
+                                    if avg_reward > best_avg_reward:
+                                        best_avg_reward = avg_reward
+                                        agent.save(BEST_MODEL_PATH)
+                                        tqdm.write(f"New best: avg_reward={avg_reward:.2f} (ep {ep + 1}), saved to {BEST_MODEL_PATH}")
+                            break
+                    
                         action = agent.act(state)
-                        prev_state = state
+                        prev_action = action
+                        prev_cell = cell
+                        prev_pos = pos
+                        prev_hint = hint
                         client.send_action(ACTIONS[action])
                         step += 1
                     ep += 1
                     if ep == MAX_EPISODES:
-                        agent.save(Path("model.pth"))
+                        if train:
+                            agent.save(LAST_MODEL_PATH)
                         client.running = False
             except KeyboardInterrupt:
+                if train:
+                    agent.save(LAST_MODEL_PATH)
                 client.running = False
         writer.flush()
         writer.close()       

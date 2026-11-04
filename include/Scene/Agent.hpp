@@ -3,7 +3,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <Engine/Core/Physics.hpp>
-#include <Scene/Maze.hpp>
 
 
 namespace Scene {
@@ -27,12 +26,13 @@ namespace Scene {
             return {.min = {m_Position - m_Size * 0.5f}, .max = {m_Position + m_Size * 0.5f}};
         }
 
-        void OnUpdate(float dt, std::span<const Engine::Physics::AABB> walls, glm::vec2 dir);
+        bool OnUpdate(float dt, std::span<const Engine::Physics::AABB> walls, glm::vec2 dir);
         void SetPosition(const glm::vec2 position) {
             m_Position = position;
         }
 
     private:
+        bool Move(int axis, float moveDelta, std::span<const Engine::Physics::AABB> walls);
         glm::vec2 m_Position;
         float m_Size = 0.0f;
     };

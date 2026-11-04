@@ -4,52 +4,32 @@
 
 namespace Engine::Physics {
 
-    static bool Touches(const AABB box, const AABB wall) {
-        return box.min.x <= wall.max.x &&
-               box.max.x >= wall.min.x &&
-               box.min.y <= wall.max.y &&
-               box.max.y >= wall.min.y;
+    constexpr std::array<glm::vec2, 4> kDirs = {{
+        {0, 1}, {1, 0}, {0, -1}, {-1, 0}
+    }};
+
+    static AABB Offset(const AABB box, const glm::vec2 delta) {
+        return {.min = box.min + delta, .max = box.max + delta};
     }
 
-    static bool Touches(const AABB box, const std::span<const AABB> walls) {
-        for (const auto wall: walls) {
-            if (Touches(box, wall)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // TODO: replace with slab method
-    static Ray RayCast(const glm::vec2 origin, const glm::vec2 dir, const std::span<const AABB> walls, const float maxDist) {
+    static Sweep SweepCast(const AABB box, const glm::vec2 dir, const std::span<const AABB> walls, const float maxDist) {
         constexpr auto step = 0.1f;
         const auto stepCount = static_cast<int>(std::round(maxDist/step));
-        for (auto i = 0; i <= stepCount; ++i) {
-            const auto distance = static_cast<float>(i) * step;
-            if (const glm::vec2 pos = origin + dir * distance; Touches(AABB{.min = pos, .max = pos}, walls)) {
-                return {.hit = true, .distance = distance, .start = origin, .end = pos};
+        for (auto i = 1; i <= stepCount; ++i) {
+            if (Overlaps(Offset(box, dir * (static_cast<float>(i) * step)), walls)) {
+                const auto distance = static_cast<float>(i - 1) * step;
+                return {.hit = true, .distance = distance, .box = Offset(box, dir * distance)};
             }
         }
-        return {.hit = false, .distance = maxDist, .start = origin, .end = origin + dir * maxDist};
+        return {.hit = false, .distance = maxDist, .box = Offset(box, dir * maxDist)};
     }
 
-    std::array<Ray, 8> RayCast(const AABB box, const std::span<const AABB> walls, const float maxDist) {
-        const auto center = box.Center();
-        const auto half = box.HalfSize();
-        std::array<Ray, 8> rays{};
-
-        auto i = 0;
-        for (auto y = 1; y >= -1; --y) {
-            for (auto x = -1; x <= 1; ++x) {
-                if (x == 0 && y == 0) {
-                    continue;
-                }
-                const auto dir = glm::vec2(static_cast<float>(x), static_cast<float>(y));
-                const auto origin = center + dir * half;
-                rays[i++] = RayCast(origin, glm::normalize(dir), walls, maxDist);
-            }
+    std::array<Sweep, 4> SweepCast(const AABB box, const std::span<const AABB> walls, const float maxDist) {
+        std::array<Sweep, 4> sweeps{};
+        for (std::size_t d = 0; d < kDirs.size(); ++d) {
+            sweeps[d] = SweepCast(box, kDirs[d], walls, maxDist);
         }
-        return rays;
+        return sweeps;
     }
 
     bool Overlaps(const AABB box, const std::span<const AABB> walls) {

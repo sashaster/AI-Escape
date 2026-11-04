@@ -20,14 +20,13 @@ namespace Engine::Physics{
         }
     };
 
-    struct Ray {
+    struct Sweep {
         bool hit;
         float distance;
-        glm::vec2 start;
-        glm::vec2 end;
+        AABB box;
     };
 
-    std::array<Ray, 8> RayCast(AABB box, std::span<const AABB> walls, float maxDist);
+    std::array<Sweep, 4> SweepCast(AABB box, std::span<const AABB> walls, float maxDist);
 
     bool Overlaps(AABB box, std::span<const AABB> walls);
     bool Overlaps(AABB box, AABB wall);
