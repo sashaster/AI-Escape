@@ -29,7 +29,6 @@ MAX_REVISIT_PENALTY = 1.0
 
 NO_ACTION = (0, 0)
 ACTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)] #UP, RIGHT, DOWN, LEFT
-MAX_EPISODES = 1000
 EVAL_WINDOW = 100
 BEST_MODEL_PATH = Path("best_model.pth")
 LAST_MODEL_PATH = Path("model.pth")
@@ -142,7 +141,8 @@ if __name__ == '__main__':
         sys.exit(1)
 
     train = True if sys.argv[1] == "train" else False 
-    MAX_STEPS = 2000 if train else 4000  
+    MAX_STEPS = 2000 if train else 4000
+    MAX_EPISODES = 1000 if train else 100
     agent = PPO(17, len(ACTIONS), device=DEVICE, writer=writer, training=train)
     if not train:
         agent.load(BEST_MODEL_PATH)

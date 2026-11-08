@@ -3,7 +3,7 @@
 
 namespace Scene {
     using namespace Engine::Physics;
-    static constexpr float kAgentSpeed = 100.0f;
+    static constexpr float kAgentSpeed = 50.0f;
 
     //TODO: check collisions only for walls near the agent
     bool Agent::OnUpdate(const float dt, const std::span<const AABB> walls, glm::vec2 dir) {

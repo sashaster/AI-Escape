@@ -18,7 +18,7 @@ constexpr float kAgentDt = 1.0f/60.0f;
 constexpr std::array kDirections = {"up", "right", "down", "left"};
 
 
-constexpr glm::uvec2 kGridDim{20, 20};
+constexpr glm::uvec2 kGridDim{10, 10};
 constexpr float kCellSize = 10.0f;
 constexpr float kWallThickness = 0.5f;
 
@@ -39,7 +39,7 @@ public:
     Simulation():m_Maze(kGridDim.x, kGridDim.y, kCellSize, kWallThickness),
                 m_Agent(m_Maze.CellCenter({kGridDim.x - 1 - m_Maze.GetExitCell().x, kGridDim.y - 1 - m_Maze.GetExitCell().y }), m_Maze.GetCellSize() * 0.5f),
                 m_Scene(m_Maze),
-                m_CameraController(static_cast<float>(Engine::kWindowWidth)/Engine::kWindowHeight, 150.0f),
+                m_CameraController(static_cast<float>(Engine::kWindowWidth)/Engine::kWindowHeight, 100.0f),
                 m_Visited(m_Maze.GetGrid().GetWidth() * m_Maze.GetGrid().GetHeight(), 0)
     {
 
