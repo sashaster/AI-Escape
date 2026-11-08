@@ -18,7 +18,7 @@ constexpr float kAgentDt = 1.0f/60.0f;
 constexpr std::array kDirections = {"up", "right", "down", "left"};
 
 
-constexpr glm::ivec2 kGridDim{5, 5};
+constexpr glm::uvec2 kGridDim{20, 20};
 constexpr float kCellSize = 10.0f;
 constexpr float kWallThickness = 0.5f;
 
@@ -37,9 +37,9 @@ void RayBar(const std::string_view name, const float distance, const float maxDi
 class Simulation final: public Engine::Layer {
 public:
     Simulation():m_Maze(kGridDim.x, kGridDim.y, kCellSize, kWallThickness),
-                m_Agent(m_Maze.CellCenter({0, 0}), m_Maze.GetCellSize() * 0.5f),
+                m_Agent(m_Maze.CellCenter({kGridDim.x - 1 - m_Maze.GetExitCell().x, kGridDim.y - 1 - m_Maze.GetExitCell().y }), m_Maze.GetCellSize() * 0.5f),
                 m_Scene(m_Maze),
-                m_CameraController(static_cast<float>(Engine::kWindowWidth)/Engine::kWindowHeight, 100.0f),
+                m_CameraController(static_cast<float>(Engine::kWindowWidth)/Engine::kWindowHeight, 150.0f),
                 m_Visited(m_Maze.GetGrid().GetWidth() * m_Maze.GetGrid().GetHeight(), 0)
     {
 
@@ -73,6 +73,7 @@ public:
                 if (m_Hint[d] == 1) hint = kHintNames[d];
             }
             ImGui::Text("Hint: %s", hint);
+            ImGui::Text("Exit: (%.2f, %.2f)", m_ExitVec.x, m_ExitVec.y);
         }
         ImGui::End();
     }
@@ -92,6 +93,7 @@ private:
     std::vector<std::uint8_t> m_Visited;
     bool m_Hit = false;
     bool m_Done = false;
+    glm::vec2 m_ExitVec{0.0f};
 
     void Step() {
         if (auto message = Engine::Net::ReceiveAction(); message) {
@@ -100,9 +102,10 @@ private:
             if(action.is_array() && action.size() == 2 && reset.is_boolean()){
                 if(reset){
                     m_Maze.Generate(std::random_device{}());
-                    m_Agent.SetPosition(m_Maze.CellCenter({0, 0}));
+                    const auto& grid = m_Maze.GetGrid();
+                    m_Agent.SetPosition(m_Maze.CellCenter({grid.GetWidth() - 1 - m_Maze.GetExitCell().x, grid.GetHeight() - 1- m_Maze.GetExitCell().y}));
                     m_Visited.clear();
-                    m_Visited.resize(m_Maze.GetGrid().GetWidth() * m_Maze.GetGrid().GetHeight());
+                    m_Visited.resize(grid.GetWidth() * grid.GetHeight());
                     std::fill(m_Visited.begin(), m_Visited.end(), 0);
                 }
                 m_Hit = m_Agent.OnUpdate(kAgentDt, m_Maze.GetWalls(), {action.at(0), action.at(1)});
@@ -131,7 +134,7 @@ private:
         m_CurrentCell = m_Maze.CellAt(m_Agent.GetPosition());
         m_Obs["cell"] = {m_CurrentCell.x, m_CurrentCell.y};
         auto offset = glm::vec2(0.0f);
-        if (const auto& grid = m_Maze.GetGrid(); grid.InBounds(m_CurrentCell.x, m_CurrentCell.y)) {
+        if (const auto& grid = m_Maze.GetGrid(); grid.InBounds(m_CurrentCell)) {
             m_Visited.at(grid.GetWidth() * m_CurrentCell.y + m_CurrentCell.x) = 1;
             offset = (m_Agent.GetPosition() - m_Maze.CellCenter(m_CurrentCell)) / m_Maze.GetCellSize();
         }
@@ -141,22 +144,24 @@ private:
 
         const auto& exitBox = m_Maze.GetExit();
         const auto toExit = exitBox.Center() - m_Agent.GetPosition();
-        state["exit"] = {toExit.x / m_Maze.GetWidth(), toExit.y / m_Maze.GetHeight()};
+        m_ExitVec = {toExit.x / m_Maze.GetWidth(), toExit.y / m_Maze.GetHeight()};
+        state["exit"] = {m_ExitVec.x, m_ExitVec.y};
 
         m_Done = Engine::Physics::Overlaps(m_Agent.Box(), exitBox);
         m_Obs["done"] = m_Done;
-        m_Obs["hit"] = m_Hit;
+        m_Obs["hit"] = m_Hit ? 1.0f : 0.0f;
     }
 
-    [[nodiscard]] std::array<std::uint32_t, 4> NearestUnvisitedHint(const glm::uvec2 start) const {
+    [[nodiscard]] std::array<std::uint32_t, 4> NearestUnvisitedHint(const glm::ivec2 startCell) const {
         std::array<std::uint32_t, 4> hint{0, 0, 0, 0};
         const auto& grid = m_Maze.GetGrid();
-        if (!grid.InBounds(start.x, start.y)) {
+        if (!grid.InBounds(startCell)) {
             return hint;
         }
-        const auto exitCell = m_Maze.GetLastCell();
+        const auto start = glm::uvec2(startCell);
+        const auto exitCell = m_Maze.GetExitCell();
         if (start == exitCell) {
-            hint[0] = 1;
+            hint[exitCell.y == 0 ? 2 : 0] = 1;
             return hint;
         }
 
@@ -186,7 +191,7 @@ private:
                     continue;
                 }
                 const auto next = glm::ivec2(current) + kSteps[dir];
-                if (next.x < 0 || next.y < 0 || !grid.InBounds(next.x, next.y)) {
+                if (!grid.InBounds(next)) {
                     continue;
                 }
                 const auto nextIdx = Index(glm::uvec2(next));

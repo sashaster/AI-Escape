@@ -118,7 +118,6 @@ class PPO:
 
         with torch.no_grad():
             dist = self.__policy(curr_state)
-            # action = dist.sample() if self.__training else dist.probs.argmax(-1)
             action = dist.sample()
 
         if self.__training:

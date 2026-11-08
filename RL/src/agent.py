@@ -18,18 +18,19 @@ PACKET_SIZE = 65535
 DEVICE = torch.accelerator.current_accelerator() if torch.accelerator.is_available() else torch.device("cpu")
 LOG = logging.getLogger("agent")
 
-WALL_PENALTY = 0.05
+WALL_PENALTY = 0.1
 EXIT_REWARD = 50.0
-NEW_CELL_REWARD = 0.5
 PROGRESS_REWARD = 0.5
+NEW_CELL_REWARD = 0.5
 STEP_PENALTY = 0.01
+REVISIT_PENALTY = 0.1
+MAX_REVISIT_PENALTY = 1.0
 
 
 NO_ACTION = (0, 0)
 ACTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)] #UP, RIGHT, DOWN, LEFT
-MAX_STEPS = 2000
 MAX_EPISODES = 1000
-EVAL_WINDOW = 20
+EVAL_WINDOW = 100
 BEST_MODEL_PATH = Path("best_model.pth")
 LAST_MODEL_PATH = Path("model.pth")
 
@@ -81,8 +82,8 @@ class UDPClient:
         self.shutdown()
         return False        
 
-def compute_reward(pos: tuple[float, float], prev_pos: tuple[float, float], prev_cell: tuple[int, int], prev_hint: list[int], cell: tuple[int, int], visited: set[tuple[int, int]], steps_left: int, hit: bool, done: bool) -> tuple[float, dict[str, float]]:
-    stats = {'wall_penalty': 0.0, 'step_penalty': 0.0, 'new_cell_reward': 0.0, 'progress_reward': 0.0, 'exit_reward': 0.0}
+def compute_reward(pos: tuple[float, float], prev_pos: tuple[float, float], cell: tuple[int, int], prev_cell: tuple[int, int], prev_hint: list[int], steps_left: int, visit_count: int, hit: float, done: bool) -> tuple[float, dict[str, float]]:
+    stats = {'wall_penalty': 0.0, 'step_penalty': 0.0, 'progress_reward': 0.0, 'new_cell_reward': 0.0, 'revisit_penalty': 0.0, 'exit_reward': 0.0}
     if done:
         r = EXIT_REWARD * (1 + steps_left/MAX_STEPS)
         stats['exit_reward'] = r
@@ -94,7 +95,7 @@ def compute_reward(pos: tuple[float, float], prev_pos: tuple[float, float], prev
         reward -= WALL_PENALTY
         stats['wall_penalty'] -= WALL_PENALTY
 
-    if 1 in prev_hint and cell == prev_cell:
+    if 1 in prev_hint:
         dx, dy = ACTIONS[prev_hint.index(1)]
         target = (prev_cell[0] + dx, prev_cell[1] + dy)
         progress = math.dist(prev_pos, target) - math.dist(pos, target)
@@ -102,10 +103,15 @@ def compute_reward(pos: tuple[float, float], prev_pos: tuple[float, float], prev
         stats['progress_reward'] = progress_r
         reward += progress_r
 
-    if cell not in visited:
-        reward += NEW_CELL_REWARD
-        stats['new_cell_reward'] = NEW_CELL_REWARD
-        visited.add(cell)
+    if cell != prev_cell:
+        if visit_count == 1:
+            stats['new_cell_reward'] = NEW_CELL_REWARD
+            reward += NEW_CELL_REWARD
+        else:
+            revisit_p = min(REVISIT_PENALTY * (visit_count - 1), MAX_REVISIT_PENALTY)
+            stats['revisit_penalty'] = -revisit_p
+            reward -= revisit_p
+
 
     return reward, stats
 
@@ -135,8 +141,9 @@ if __name__ == '__main__':
         LOG.error("Run with flag: train or test")
         sys.exit(1)
 
-    train = True if sys.argv[1] == "train" else False    
-    agent = PPO(16, len(ACTIONS), device=DEVICE, writer=writer, training=train)
+    train = True if sys.argv[1] == "train" else False 
+    MAX_STEPS = 2000 if train else 4000  
+    agent = PPO(17, len(ACTIONS), device=DEVICE, writer=writer, training=train)
     if not train:
         agent.load(BEST_MODEL_PATH)
     with UDPClient(PORT, HOST) as client:
@@ -149,8 +156,8 @@ if __name__ == '__main__':
             step = 0
             reward: float|None = None
             truncated = False
-            stats = {'wall_penalty': 0.0, 'step_penalty': 0.0, 'new_cell_reward': 0.0, 'progress_reward': 0.0, 'exit_reward': 0.0}
-            visited = {(0, 0)}
+            stats = {'wall_penalty': 0.0, 'step_penalty': 0.0, 'progress_reward': 0.0, 'new_cell_reward': 0.0, 'revisit_penalty': 0.0, 'exit_reward': 0.0}
+            visited: dict[tuple[int, int], int] = {}
             prev_action: int|None = None
             prev_cell: tuple[int, int] = (0, 0)
             prev_pos: tuple[float, float] = (0.0, 0.0)
@@ -170,17 +177,17 @@ if __name__ == '__main__':
                         x, y = obs['cell']
                         cell = (int(x), int(y))
                         pos = (cell[0] + offset[0], cell[1] + offset[1])
-
+                        if prev_action is None or cell != prev_cell:
+                            visited[cell] = visited.get(cell, 0) + 1
 
                         done = obs['done']
                         hit = obs['hit']
                         if prev_action is not None:
                             actions[prev_action] = 1.0
-                        state = sensors + offset + hint + exit_vec + actions
-
+                        state = sensors + offset + hint + exit_vec + actions + [hit]
                         if prev_action is not None:
                             steps_left = MAX_STEPS - step
-                            reward, details = compute_reward(pos, prev_pos, prev_cell, prev_hint, cell, visited, steps_left, hit, done)
+                            reward, details = compute_reward(pos, prev_pos, cell, prev_cell, prev_hint, steps_left, visited[cell], hit, done)
                             for k,v in details.items():
                                 stats[k] += v
                             truncated = not done and step >= MAX_STEPS

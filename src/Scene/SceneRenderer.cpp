@@ -22,7 +22,7 @@ namespace Scene {
         const auto cs = maze.GetCellSize();
         const auto wt = maze.GetWallThickness();
         const auto& grid = maze.GetGrid();
-        const auto lastCell = maze.GetLastCell();
+        const auto exitCell = maze.GetExitCell();
         const auto origin = maze.Origin();
         AddWall(origin.x + maze.GetWidth() * 0.5f, origin.y + maze.GetHeight() * 0.5f, maze.GetWidth() * 0.5f, maze.GetHeight() * 0.5f, floorColor);
         for (auto y = 0; y < grid.GetHeight(); ++y) {
@@ -33,9 +33,10 @@ namespace Scene {
                     AddWall(cellPos.x + cs * 0.5f,  cellPos.y + cs,  cs * 0.5f, wt * 0.5f, wallColor);
                 }
 
-                if (lastCell.x == x && lastCell.y == y) {
-                    const float topY = cellPos.y + cs;
-                    const float ecy = topY + cs * 0.5f;
+                if (exitCell.x == x && exitCell.y == y) {
+                    const auto bottom = (y == 0);
+                    const auto boxY = bottom ? cellPos.y - cs : cellPos.y + cs;
+                    const float ecy = boxY + cs * 0.5f;
                     AddWall(cellPos.x + cs * 0.5f, ecy, cs * 0.5f, cs * 0.5f, exitColor);
                 }
                 if (cell.wallE) {

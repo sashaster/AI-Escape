@@ -8,6 +8,7 @@
 
 namespace Scene {
 
+
     void MazeGrid::Generate() {
         Reset();
         constexpr int startX = 0, startY = 0;
@@ -90,9 +91,10 @@ namespace Scene {
                 if (cell.wallN) {
                     m_Walls.emplace_back(Box(cellPos.x + m_CellSize * 0.5f,  cellPos.y + m_CellSize,  m_CellSize * 0.5f, m_WallThickness * 0.5f));
                 }
-                if (m_LastCell.x == x && m_LastCell.y == y) {
-                    const float topY = cellPos.y + m_CellSize;
-                    m_Exit = {.min = {cellPos.x, topY}, .max = {cellPos.x + m_CellSize, topY + m_CellSize}};
+                if (m_ExitCell.x == x && m_ExitCell.y == y) {
+                    const auto bottom = (y == 0);
+                    const auto boxY = bottom ? cellPos.y - m_CellSize : cellPos.y + m_CellSize;
+                    m_Exit = {.min = {cellPos.x, boxY}, .max = {cellPos.x + m_CellSize, boxY + m_CellSize}};
                 }
                 if (cell.wallE) {
                     m_Walls.emplace_back(Box(cellPos.x + m_CellSize, cellPos.y + m_CellSize * 0.5f, m_WallThickness * 0.5f, m_CellSize * 0.5f));
@@ -115,8 +117,6 @@ namespace Scene {
                 m_WallThickness(wallThickness),
                 m_Seed(seed)
     {
-        m_LastCell.x = m_Grid.GetWidth() - 1;
-        m_LastCell.y = m_Grid.GetHeight() - 1;
         Generate(m_Seed);
     }
 
@@ -124,9 +124,31 @@ namespace Scene {
         Engine::Random::Seed(seed);
         m_Seed = seed;
         m_Grid.Generate();
-        m_Grid[m_LastCell.x, m_LastCell.y].wallN = false;
+        AddExitCell();
         m_Walls.clear();
         BuildColliders();
+    }
+
+    void Maze::AddExitCell(){
+        switch (Engine::Random::Uint(1, 4)) {
+            case 1:
+                m_ExitCell = glm::uvec2{0};
+                m_Grid[m_ExitCell.x, m_ExitCell.y].wallS = false;
+                break;
+            case 2:
+                m_ExitCell = glm::uvec2{0, m_Grid.GetHeight() - 1};
+                m_Grid[m_ExitCell.x, m_ExitCell.y].wallN = false;
+                break;
+            case 3:
+                m_ExitCell = glm::uvec2{m_Grid.GetWidth() - 1, m_Grid.GetHeight() - 1};
+                m_Grid[m_ExitCell.x, m_ExitCell.y].wallN = false;
+                break;
+            case 4:
+                m_ExitCell = glm::uvec2{m_Grid.GetWidth() - 1, 0};
+                m_Grid[m_ExitCell.x, m_ExitCell.y].wallS = false;
+                break;
+            default: ;
+        }
     }
 
 }
