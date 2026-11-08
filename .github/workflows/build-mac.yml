@@ -1,0 +1,28 @@
+name: Build Mac
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Cache build dependencies
+        uses: actions/cache@v6
+        with:
+            path: build/_deps
+            key: ${{runner.os}}-${{hashFiles('CMakeLists.txt')}}
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+            cmake-version: '4.3.x'
+      - name: Show versions
+        run: |
+          clang++ --version
+          cmake --version
+      - name: Build
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release  

@@ -76,6 +76,7 @@ namespace Engine {
                     data->eventCallback(event);
                 }
                 default:
+                    break;
             }
         });
 
@@ -108,6 +109,7 @@ namespace Engine {
                     break;
                 }
                 default:
+                    break;
             }
         });
 
